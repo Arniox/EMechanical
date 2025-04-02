@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mechanical System Analyzer</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <div id="toolbar">
+      <h2>Tools</h2>
+      <div class="tool-section">
+        <h3>View</h3>
+        <button id="resetView">Reset View</button>
+        <div class="checkbox-group">
+          <input type="checkbox" id="showGrid" checked />
+          <label for="showGrid">Show Grid</label>
+        </div>
+      </div>
+
+      <div class="tool-section">
+        <h3>Structure</h3>
+        <button id="addNode">Add Node</button>
+        <button id="addMember">Connect Nodes</button>
+      </div>
+
+      <div class="tool-section">
+        <h3>Properties</h3>
+        <div class="form-group">
+          <label for="objectColor">Color:</label>
+          <input type="color" id="objectColor" value="#4287f5" />
+        </div>
+      </div>
+
+      <div class="tool-section">
+        <h3>Selected Object</h3>
+        <p id="selectedObjectInfo">No object selected</p>
+        <button id="deleteSelected" disabled>Delete</button>
+      </div>
+
+      <div class="tool-section">
+        <h3>Analysis</h3>
+        <button id="runAnalysis" disabled>Calculate Forces</button>
+        <div class="results-panel">
+          <p>Results will appear here...</p>
+        </div>
+      </div>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../node_modules/three/build/three.module.js",
+          "three/addons/": "../node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+    <div id="canvasContainer"></div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
