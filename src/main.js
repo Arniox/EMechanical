@@ -1,7 +1,8 @@
 // src/main.js
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { TransformControls } from "three/addons/controls/TransformControls.js";
+import { OrbitControls } from "/three/addons/controls/OrbitControls.js";
+import { TransformControls } from "/three/addons/controls/TransformControls.js";
+
 import { startAnimationLoop, handleResize } from "./render.js";
 import {
     createNode,
@@ -86,8 +87,18 @@ export let transformControls = new TransformControls(
     camera,
     renderer.domElement
 );
-scene.add(transformControls);
+scene.add(transformControls.getHelper());
 transformControls.setMode("translate");
+
+// Transform Controller Helper
+const helper = transformControls.getHelper();
+helper.traverse(child => {
+    child.layers.set(1); // Move helper to layer 1
+});
+camera.layers.enable(0);  // Ensure camera still renders layer 0 (for your nodes)
+raycaster.layers.set(0);   // Raycast only on layer 0
+
+// Sizing and event handling
 transformControls.setSize(0.5); // Increase gizmo size so it's more visible
 // Disable OrbitControls when TransformControls is active.
 transformControls.addEventListener("mouseDown", () => {
@@ -108,14 +119,14 @@ function addSelectionOutline(node) {
         color: 0xffff00,
         wireframe: true,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.4,
     });
     const outlineMesh = new THREE.Mesh(outlineGeom, outlineMat);
-    outlineMesh.position.copy(node.position);
-    outlineMesh.rotation.copy(node.rotation);
+    outlineMesh.position.set(0, 0, 0);  // relative to node
+    outlineMesh.rotation.set(0, 0, 0);
     outlineMesh.scale.copy(node.scale).multiplyScalar(1.1);
+    node.add(outlineMesh); // attach as child
     node.userData.selectionOutline = outlineMesh;
-    scene.add(outlineMesh);
 }
 
 function removeSelectionOutline(node) {
@@ -169,9 +180,17 @@ function onMouseClick(event) {
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(nodes);
+    const intersects = raycaster.intersectObjects(nodes, true);
+
     if (intersects.length > 0) {
-        const clickedNode = intersects[0].object;
+        // Get the top-level node (in case the intersection hits a child, like the outline)
+        let clickedNode = intersects[0].object;
+        for (let n of nodes) {
+            if (n === clickedNode || n.children.includes(clickedNode)) {
+                clickedNode = n;
+                break;
+            }
+        }
         if (event.ctrlKey) {
             clearMovementSelection();
             const idx = connectionNodes.indexOf(clickedNode);
@@ -197,6 +216,7 @@ function onMouseClick(event) {
             updateSelectedObjectInfo("Selected node for movement");
         }
     } else {
+        // Clear selection immediately on single click on empty space
         clearMovementSelection();
         clearConnectionSelection();
         updateSelectedObjectInfo("No object selected");

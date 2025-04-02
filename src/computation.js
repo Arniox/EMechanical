@@ -1,5 +1,5 @@
 // src/computation.js
-import * as THREE from 'three';
+import * as THREE from "three";
 import { nodes, members } from './objects.js';
 
 export function runComputations() {
@@ -21,7 +21,7 @@ export function getAllMembers() {
 export function calculateMemberForces() {
     const membersList = getAllMembers();
     const results = [];
-    
+
     for (const member of membersList) {
         const startNode = member.userData.startNode;
         const endNode = member.userData.endNode;
@@ -30,10 +30,10 @@ export function calculateMemberForces() {
         const originalLength = member.userData.originalLength || currentLength;
         const strain = (currentLength - originalLength) / originalLength;
         const stress = strain * member.userData.stiffness; // Simple Hooke's law
-        
+
         const direction = new THREE.Vector3().subVectors(endNode.position, startNode.position).normalize();
         const forceVector = direction.multiplyScalar(stress);
-        
+
         results.push({
             member: member,
             strain: strain,
@@ -41,7 +41,7 @@ export function calculateMemberForces() {
             force: forceVector
         });
     }
-    
+
     return results;
 }
 
@@ -49,14 +49,14 @@ export function calculateMemberForces() {
 export function analyzeStructure() {
     const nodesList = getAllNodes();
     const membersList = getAllMembers();
-    
+
     if (nodesList.length < 2 || membersList.length < 1) {
         return {
             valid: false,
             message: "Structure needs at least 2 nodes and 1 member"
         };
     }
-    
+
     const fixedNodes = nodesList.filter(node => node.userData.isFixed);
     if (fixedNodes.length === 0) {
         return {
@@ -64,9 +64,9 @@ export function analyzeStructure() {
             message: "Structure needs at least one fixed node"
         };
     }
-    
+
     const memberResults = calculateMemberForces();
-    
+
     return {
         valid: true,
         message: "Analysis complete",

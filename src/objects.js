@@ -1,5 +1,5 @@
 // src/objects.js
-import * as THREE from 'three';
+import * as THREE from "three";
 
 let scene = null;
 export function setScene(s) {

@@ -1,5 +1,4 @@
 // src/render.js
-import * as THREE from 'three'; // Often needed for types or utils even if core objects are imported
 import { scene, camera, renderer, controls, container, transformControls } from './main.js';
 import { runComputations } from './computation.js'; // Import computation function
 
