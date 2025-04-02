@@ -1,6 +1,6 @@
 // src/render.js
 import * as THREE from 'three'; // Often needed for types or utils even if core objects are imported
-import { scene, camera, renderer, controls, container, worldCubeGroup } from './main.js';
+import { scene, camera, renderer, controls, container, transformControls } from './main.js';
 import { runComputations } from './computation.js'; // Import computation function
 
 // The core animation function
@@ -11,6 +11,7 @@ function animate() {
     controls.update();
 
     // Run computation checks/updates (currently empty)
+    transformControls.update(); // Ensure gizmo updates
     runComputations();
 
     // Render the scene

@@ -27,16 +27,13 @@
 
       <div class="tool-section">
         <h3>Properties</h3>
-        <div class="form-group">
-          <label for="objectColor">Color:</label>
-          <input type="color" id="objectColor" value="#4287f5" />
+        <div class="form-group" id="forceInput" style="display: none">
+          <label>Force Vector (x, y, z):</label>
+          <input type="number" id="forceX" step="0.1" value="0" />
+          <input type="number" id="forceY" step="0.1" value="0" />
+          <input type="number" id="forceZ" step="0.1" value="0" />
+          <button id="applyForce">Apply Force</button>
         </div>
-      </div>
-
-      <div class="tool-section">
-        <h3>Selected Object</h3>
-        <p id="selectedObjectInfo">No object selected</p>
-        <button id="deleteSelected" disabled>Delete</button>
       </div>
 
       <div class="tool-section">
@@ -45,6 +42,12 @@
         <div class="results-panel">
           <p>Results will appear here...</p>
         </div>
+      </div>
+
+      <div class="tool-section">
+        <h3>Selected Object</h3>
+        <p id="selectedObjectInfo">No object selected</p>
+        <button id="deleteSelected" disabled>Delete</button>
       </div>
     </div>
     <script type="importmap">
