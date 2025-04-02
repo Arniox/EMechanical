@@ -1,22 +1,22 @@
 // src/main.js
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { TransformControls } from 'three/addons/controls/TransformControls.js';
-import { startAnimationLoop, handleResize } from './render.js';
-import { 
-  createNode, 
-  createMember, 
-  deleteNode, 
-  updateAllMembers, 
-  nodes, 
-  setScene 
-} from './objects.js';
-import { setupWorld } from './world.js';
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { TransformControls } from "three/addons/controls/TransformControls.js";
+import { startAnimationLoop, handleResize } from "./render.js";
+import {
+    createNode,
+    createMember,
+    deleteNode,
+    updateAllMembers,
+    nodes,
+    setScene,
+} from "./objects.js";
+import { setupWorld } from "./world.js";
 
 // --- DOM Container ---
-export const container = document.getElementById('canvasContainer');
+export const container = document.getElementById("canvasContainer");
 if (!container) {
-    throw new Error('Could not find canvas container element!');
+    throw new Error("Could not find canvas container element!");
 }
 
 //#region Scene & Renderer Setup
@@ -34,7 +34,7 @@ export const camera = new THREE.PerspectiveCamera(
     1000
 );
 camera.position.set(1.2, 1.2, 1.8); // Closer view
-camera.lookAt(0, 0, 0);             // Ensure it looks at the center
+camera.lookAt(0, 0, 0); // Ensure it looks at the center
 
 // --- Renderer Setup ---
 export const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -59,7 +59,7 @@ controls.maxDistance = 10;
 controls.mouseButtons = {
     LEFT: THREE.MOUSE.ROTATE,
     MIDDLE: THREE.MOUSE.PAN,
-    RIGHT: THREE.MOUSE.ROTATE
+    RIGHT: THREE.MOUSE.ROTATE,
 };
 
 function resetView() {
@@ -68,29 +68,36 @@ function resetView() {
     controls.target.set(0, 0, 0);
     controls.update();
 }
-document.getElementById('resetView').addEventListener('click', resetView);
-document.getElementById('showGrid').addEventListener('change', (e) => {
+document.getElementById("resetView").addEventListener("click", resetView);
+document.getElementById("showGrid").addEventListener("change", (e) => {
     gridHelper.visible = e.target.checked;
 });
 //#endregion
 
 //#region Object Interaction & Selection
-// For movement (single selection) and multi-selection (for connecting)
-let selectedNode = null;      // For movement mode.
-let connectionNodes = [];     // For multi-select connection mode (via Ctrl‑click).
+let selectedNode = null; // For movement mode.
+let connectionNodes = []; // For multi-select connection mode (via Ctrl‑click).
 
 export const raycaster = new THREE.Raycaster();
 export const mouse = new THREE.Vector2();
 
 // Set up TransformControls for moving nodes.
-export let transformControls = new TransformControls(camera, renderer.domElement);
+export let transformControls = new TransformControls(
+    camera,
+    renderer.domElement
+);
 scene.add(transformControls);
 transformControls.setMode("translate");
+transformControls.setSize(0.5); // Increase gizmo size so it's more visible
 // Disable OrbitControls when TransformControls is active.
-transformControls.addEventListener('mouseDown', () => { controls.enabled = false; });
-transformControls.addEventListener('mouseUp', () => { controls.enabled = true; });
-transformControls.addEventListener('objectChange', () => {
-  updateAllMembers();
+transformControls.addEventListener("mouseDown", () => {
+    controls.enabled = false;
+});
+transformControls.addEventListener("mouseUp", () => {
+    controls.enabled = true;
+});
+transformControls.addEventListener("objectChange", () => {
+    updateAllMembers();
 });
 
 // --- Helper functions for selection outlines ---
@@ -101,7 +108,7 @@ function addSelectionOutline(node) {
         color: 0xffff00,
         wireframe: true,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.8,
     });
     const outlineMesh = new THREE.Mesh(outlineGeom, outlineMat);
     outlineMesh.position.copy(node.position);
@@ -139,13 +146,10 @@ function updateConnectButtonState() {
 function updateSelectedObjectInfo(text) {
     const infoElement = document.getElementById('selectedObjectInfo');
     infoElement.textContent = text;
-    // For deletion, only allow single selection (movement mode)
     document.getElementById('deleteSelected').disabled = !selectedNode;
-    // If exactly one node is selected, show the force vector properties panel.
     const forcePanel = document.getElementById('forceInput');
     if (selectedNode && connectionNodes.length === 0) {
         forcePanel.style.display = 'block';
-        // Optionally, update the inputs with the current force values if available.
         if (selectedNode.userData.forces) {
             document.getElementById('forceX').value = selectedNode.userData.forces.x;
             document.getElementById('forceY').value = selectedNode.userData.forces.y;
@@ -161,42 +165,42 @@ function updateSelectedObjectInfo(text) {
 }
 
 function onMouseClick(event) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(nodes);
-  if (intersects.length > 0) {
-    const clickedNode = intersects[0].object;
-    if (event.ctrlKey) {
-      clearMovementSelection();
-      const idx = connectionNodes.indexOf(clickedNode);
-      if (idx !== -1) {
-        connectionNodes.splice(idx, 1);
-        removeSelectionOutline(clickedNode);
-      } else {
-        if (connectionNodes.length >= 2) {
-          const removed = connectionNodes.shift();
-          removeSelectionOutline(removed);
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(nodes);
+    if (intersects.length > 0) {
+        const clickedNode = intersects[0].object;
+        if (event.ctrlKey) {
+            clearMovementSelection();
+            const idx = connectionNodes.indexOf(clickedNode);
+            if (idx !== -1) {
+                connectionNodes.splice(idx, 1);
+                removeSelectionOutline(clickedNode);
+            } else {
+                if (connectionNodes.length >= 2) {
+                    const removed = connectionNodes.shift();
+                    removeSelectionOutline(removed);
+                }
+                connectionNodes.push(clickedNode);
+                addSelectionOutline(clickedNode);
+            }
+            updateConnectButtonState();
+            updateSelectedObjectInfo(`Selected ${connectionNodes.length} node(s) for connection (Ctrl‑click)`);
+        } else {
+            clearConnectionSelection();
+            clearMovementSelection();
+            selectedNode = clickedNode;
+            addSelectionOutline(selectedNode);
+            transformControls.attach(selectedNode);
+            updateSelectedObjectInfo("Selected node for movement");
         }
-        connectionNodes.push(clickedNode);
-        addSelectionOutline(clickedNode);
-      }
-      updateConnectButtonState();
-      updateSelectedObjectInfo(`Selected ${connectionNodes.length} node(s) for connection (Ctrl‑click)`);
     } else {
-      clearConnectionSelection();
-      clearMovementSelection();
-      selectedNode = clickedNode;
-      addSelectionOutline(selectedNode);
-      transformControls.attach(selectedNode);
-      updateSelectedObjectInfo("Selected node for movement");
+        clearMovementSelection();
+        clearConnectionSelection();
+        updateSelectedObjectInfo("No object selected");
     }
-  } else {
-    clearMovementSelection();
-    clearConnectionSelection();
-    updateSelectedObjectInfo("No object selected");
-  }
 }
 renderer.domElement.addEventListener('click', onMouseClick);
 
@@ -210,7 +214,6 @@ document.getElementById('addNode').addEventListener('click', () => {
     createNode(pos);
 });
 
-// Connect Nodes button: create beam if exactly 2 nodes are selected.
 document.getElementById('addMember').addEventListener('click', () => {
     if (connectionNodes.length === 2) {
         createMember(connectionNodes[0], connectionNodes[1]);
@@ -221,7 +224,6 @@ document.getElementById('addMember').addEventListener('click', () => {
     }
 });
 
-// Delete button: delete the movement-selected node.
 document.getElementById('deleteSelected').addEventListener('click', () => {
     if (selectedNode) {
         deleteNode(selectedNode);
@@ -235,10 +237,8 @@ document.getElementById('applyForce').addEventListener('click', () => {
         const fx = parseFloat(document.getElementById('forceX').value) || 0;
         const fy = parseFloat(document.getElementById('forceY').value) || 0;
         const fz = parseFloat(document.getElementById('forceZ').value) || 0;
-        // Use your computation module's applyForceToNode function (imported in computation.js or elsewhere)
-        // For example, if you imported it as applyForceToNode:
+        // Call your force function from computation.js if needed:
         // applyForceToNode(selectedNode, new THREE.Vector3(fx, fy, fz));
-        // (Ensure you import and call the proper function from your module)
     }
 });
 //#endregion
