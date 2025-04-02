@@ -1,9 +1,7 @@
 // src/objects.js
 import * as THREE from 'three';
 
-let scene = null; // Initially null
-
-// Call this from main.js after creating the scene.
+let scene = null;
 export function setScene(s) {
     scene = s;
 }
@@ -11,11 +9,10 @@ export function setScene(s) {
 export let nodes = [];
 export let members = [];
 
-// Create a node (a small sphere) at the given position.
-export function createNode(position, color = 0x4287f5) {
+export function createNode(position) {
     const geometry = new THREE.SphereGeometry(0.015, 16, 16);
     const material = new THREE.MeshStandardMaterial({
-        color: color,
+        color: 0x4287f5, // default blue
         roughness: 0.5,
         metalness: 0.5
     });

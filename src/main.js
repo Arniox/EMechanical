@@ -44,8 +44,8 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 //#endregion
 
-//#region Lighting & Materials
-// --- Lighting (Enhanced for better visualization) ---
+//#region Lighting & World Setup
+// --- Lighting ---
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 
@@ -67,11 +67,9 @@ const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
 fillLight.position.set(-5, 2, -7.5);
 scene.add(fillLight);
 
-// --- 1-Unit World Cube with Colored Axis Edges ---
-const worldSize = 1.0; // 1 unit
+// --- World Cube & Grid ---
+const worldSize = 1.0;
 const halfSize = worldSize / 2;
-
-// Define the 8 vertices of the cube centered at the origin
 const vertices = [
     new THREE.Vector3(-halfSize, -halfSize, -halfSize), // 0: ---
     new THREE.Vector3( halfSize, -halfSize, -halfSize), // 1: +--
@@ -82,51 +80,38 @@ const vertices = [
     new THREE.Vector3( halfSize,  halfSize,  halfSize), // 6: +++
     new THREE.Vector3(-halfSize,  halfSize,  halfSize)  // 7: -++
 ];
-
-// Define materials for each axis color
 const materialX = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red for X
 const materialY = new THREE.LineBasicMaterial({ color: 0x00ff00 }); // Green for Y
 const materialZ = new THREE.LineBasicMaterial({ color: 0x0000ff }); // Blue for Z
-//#endregion
 
-//#region World & Volume Setup
-// Create a group to hold all the lines
-export const worldCubeGroup = new THREE.Group(); 
-
-// Function to create a line segment
+export const worldCubeGroup = new THREE.Group();
 function createLine(v1, v2, material) {
     const geometry = new THREE.BufferGeometry().setFromPoints([v1, v2]);
     return new THREE.Line(geometry, material);
 }
 
-// Create the 12 lines (edges) of the cube
 // Edges parallel to X axis (Red)
 worldCubeGroup.add(createLine(vertices[0], vertices[1], materialX));
 worldCubeGroup.add(createLine(vertices[3], vertices[2], materialX));
 worldCubeGroup.add(createLine(vertices[4], vertices[5], materialX));
 worldCubeGroup.add(createLine(vertices[7], vertices[6], materialX));
-
 // Edges parallel to Y axis (Green)
 worldCubeGroup.add(createLine(vertices[0], vertices[3], materialY));
 worldCubeGroup.add(createLine(vertices[1], vertices[2], materialY));
 worldCubeGroup.add(createLine(vertices[4], vertices[7], materialY));
 worldCubeGroup.add(createLine(vertices[5], vertices[6], materialY));
-
 // Edges parallel to Z axis (Blue)
 worldCubeGroup.add(createLine(vertices[0], vertices[4], materialZ));
 worldCubeGroup.add(createLine(vertices[1], vertices[5], materialZ));
 worldCubeGroup.add(createLine(vertices[2], vertices[6], materialZ));
 worldCubeGroup.add(createLine(vertices[3], vertices[7], materialZ));
-
 scene.add(worldCubeGroup);
 
-// --- Grid Helper ---
 export const gridHelper = new THREE.GridHelper(1, 10, 0x888888, 0x444444);
 scene.add(gridHelper);
 //#endregion
 
 //#region Controls
-// --- Controls ---
 export const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0); // Explicitly set target to origin
 controls.enableDamping = true;
@@ -140,21 +125,19 @@ controls.mouseButtons = {
     RIGHT: THREE.MOUSE.ROTATE
 };
 
-// Function to reset the camera view
 function resetView() {
     camera.position.set(1.2, 1.2, 1.8);
     camera.lookAt(0, 0, 0);
     controls.target.set(0, 0, 0);
     controls.update();
 }
-
 document.getElementById('resetView').addEventListener('click', resetView);
 document.getElementById('showGrid').addEventListener('change', (e) => {
     gridHelper.visible = e.target.checked;
 });
 //#endregion
 
-// --- Object Interaction and Modes ---
+//#region Object Interaction & Selection
 // For movement (single selection) and multi-selection (for connecting)
 let selectedNode = null;      // For movement mode.
 let connectionNodes = [];     // For multi-select connection mode (via Ctrl‑click).
@@ -170,17 +153,17 @@ transformControls.addEventListener('objectChange', () => {
     updateAllMembers();
 });
 
-// --- Helper Functions for Selection Outlines ---
-function addSelectionOutline(node, color = 0xffff00) {
+// --- Helper functions for selection outlines ---
+function addSelectionOutline(node) {
     removeSelectionOutline(node);
-    const outlineGeometry = node.geometry.clone();
-    const outlineMaterial = new THREE.MeshBasicMaterial({
-        color: color,
+    const outlineGeom = node.geometry.clone();
+    const outlineMat = new THREE.MeshBasicMaterial({
+        color: 0xffff00,
         wireframe: true,
         transparent: true,
         opacity: 0.8
     });
-    const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
+    const outlineMesh = new THREE.Mesh(outlineGeom, outlineMat);
     outlineMesh.position.copy(node.position);
     outlineMesh.rotation.copy(node.rotation);
     outlineMesh.scale.copy(node.scale).multiplyScalar(1.1);
@@ -206,50 +189,62 @@ function clearMovementSelection() {
 function clearConnectionSelection() {
     connectionNodes.forEach(node => removeSelectionOutline(node));
     connectionNodes = [];
+    // Disable Connect button if no multi-selection.
+    document.getElementById('addMember').disabled = true;
 }
 
-// Update the UI info panel and delete button.
+function updateConnectButtonState() {
+    // Enable the Connect Nodes button only if exactly 2 nodes are selected.
+    document.getElementById('addMember').disabled = (connectionNodes.length !== 2);
+}
+
 function updateSelectedObjectInfo(text) {
     const infoElement = document.getElementById('selectedObjectInfo');
     infoElement.textContent = text;
-    document.getElementById('deleteSelected').disabled = !text || text === "No object selected";
+    // For deletion, only allow single selection (movement mode)
+    document.getElementById('deleteSelected').disabled = !selectedNode;
 }
 
-// --- Mouse Click Handling ---
 function onMouseClick(event) {
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
-    
-    // Only consider nodes.
     const intersects = raycaster.intersectObjects(nodes);
+    
     if (intersects.length > 0) {
         const clickedNode = intersects[0].object;
-        if (isConnecting) {
-            // In connection mode, allow selection of two nodes.
-            if (!connectionNodes.includes(clickedNode)) {
-                connectionNodes.push(clickedNode);
-                const color = connectionNodes.length === 1 ? 0xffff00 : 0xffa500;
-                addSelectionOutline(clickedNode, color);
-                if (connectionNodes.length === 2) {
-                    // Create beam and exit connection mode.
-                    createMember(connectionNodes[0], connectionNodes[1]);
-                    clearConnectionSelection();
-                    isConnecting = false;
-                    updateSelectedObjectInfo("Connected nodes");
+        if (event.ctrlKey) {
+            // In multi-select mode for connection.
+            // Clear any movement selection.
+            clearMovementSelection();
+            // If already selected, toggle it off.
+            const idx = connectionNodes.indexOf(clickedNode);
+            if (idx !== -1) {
+                connectionNodes.splice(idx, 1);
+                removeSelectionOutline(clickedNode);
+            } else {
+                // If already two nodes are selected, remove the oldest.
+                if (connectionNodes.length >= 2) {
+                    const removed = connectionNodes.shift();
+                    removeSelectionOutline(removed);
                 }
+                connectionNodes.push(clickedNode);
+                addSelectionOutline(clickedNode);
             }
+            updateConnectButtonState();
+            updateSelectedObjectInfo(`Selected ${connectionNodes.length} node(s) for connection (Ctrl‑click)`);
         } else {
-            // Movement mode: select only the clicked node.
+            // Single-select movement mode.
+            clearConnectionSelection();
             clearMovementSelection();
             selectedNode = clickedNode;
-            addSelectionOutline(selectedNode, 0xffff00);
+            addSelectionOutline(selectedNode);
             transformControls.attach(selectedNode);
             updateSelectedObjectInfo("Selected node for movement");
         }
     } else {
-        // Click on empty space clears selections.
+        // Click on empty space clears all selections.
         clearMovementSelection();
         clearConnectionSelection();
         updateSelectedObjectInfo("No object selected");
@@ -258,43 +253,37 @@ function onMouseClick(event) {
 renderer.domElement.addEventListener('click', onMouseClick);
 
 // --- Toolbar Button Listeners ---
-document.getElementById('resetView').addEventListener('click', function () {
-    camera.position.set(1.2, 1.2, 1.8);
-    camera.lookAt(0, 0, 0);
-    controls.target.set(0, 0, 0);
-    controls.update();
-});
-document.getElementById('showGrid').addEventListener('change', function (e) {
-    gridHelper.visible = e.target.checked;
-});
-document.getElementById('addNode').addEventListener('click', function () {
-    const position = new THREE.Vector3(
+document.getElementById('addNode').addEventListener('click', () => {
+    const pos = new THREE.Vector3(
         (Math.random() - 0.5) * 0.8,
         (Math.random() - 0.5) * 0.8,
         (Math.random() - 0.5) * 0.8
     );
-    createNode(position);
+    createNode(pos);
 });
-// When "Connect Nodes" is clicked, enter connection mode.
-document.getElementById('addMember').addEventListener('click', function () {
-    clearMovementSelection();
-    clearConnectionSelection();
-    isConnecting = true;
-    updateSelectedObjectInfo("Connection mode: select 2 nodes");
+
+// Connect Nodes button: create beam if exactly 2 nodes are selected.
+document.getElementById('addMember').addEventListener('click', () => {
+    if (connectionNodes.length === 2) {
+        createMember(connectionNodes[0], connectionNodes[1]);
+        clearConnectionSelection();
+        updateSelectedObjectInfo("Connected nodes");
+    } else {
+        alert("Please Ctrl‑click to select exactly 2 nodes to connect.");
+    }
 });
-// Delete the currently selected node (and its beams).
-document.getElementById('deleteSelected').addEventListener('click', function () {
+
+// Delete button: delete the single movement-selected node.
+document.getElementById('deleteSelected').addEventListener('click', () => {
     if (selectedNode) {
         deleteNode(selectedNode);
         clearMovementSelection();
         updateSelectedObjectInfo("No object selected");
     }
 });
+//#endregion
 
-// --- Other Event Listeners ---
+// --- Animation Loop ---
 window.addEventListener('resize', handleResize);
-
-// Start the animation loop.
 startAnimationLoop();
-
 console.log("Mechanical system modeling setup complete.");
