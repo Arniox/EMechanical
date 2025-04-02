@@ -89,16 +89,6 @@ export let transformControls = new TransformControls(
 );
 scene.add(transformControls.getHelper());
 transformControls.setMode("translate");
-
-// Transform Controller Helper
-const helper = transformControls.getHelper();
-helper.traverse(child => {
-    child.layers.set(1); // Move helper to layer 1
-});
-camera.layers.enable(0);  // Ensure camera still renders layer 0 (for your nodes)
-raycaster.layers.set(0);   // Raycast only on layer 0
-
-// Sizing and event handling
 transformControls.setSize(0.5); // Increase gizmo size so it's more visible
 // Disable OrbitControls when TransformControls is active.
 transformControls.addEventListener("mouseDown", () => {
@@ -113,7 +103,8 @@ transformControls.addEventListener("objectChange", () => {
 
 // --- Helper functions for selection outlines ---
 function addSelectionOutline(node) {
-    removeSelectionOutline(node);
+    // If an outline already exists, do nothing.
+    if (node.userData.selectionOutline) return;
     const outlineGeom = node.geometry.clone();
     const outlineMat = new THREE.MeshBasicMaterial({
         color: 0xffff00,
@@ -122,16 +113,18 @@ function addSelectionOutline(node) {
         opacity: 0.4,
     });
     const outlineMesh = new THREE.Mesh(outlineGeom, outlineMat);
-    outlineMesh.position.set(0, 0, 0);  // relative to node
+    // Position relative to the node (so it moves with it)
+    outlineMesh.position.set(0, 0, 0);
     outlineMesh.rotation.set(0, 0, 0);
     outlineMesh.scale.copy(node.scale).multiplyScalar(1.1);
-    node.add(outlineMesh); // attach as child
+    node.add(outlineMesh); // Attach as child
     node.userData.selectionOutline = outlineMesh;
 }
 
 function removeSelectionOutline(node) {
     if (node.userData.selectionOutline) {
-        scene.remove(node.userData.selectionOutline);
+        // Remove the outline from the node rather than from the scene.
+        node.remove(node.userData.selectionOutline);
         delete node.userData.selectionOutline;
     }
 }

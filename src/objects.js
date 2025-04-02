@@ -28,7 +28,7 @@ export function createNode(position) {
 // Create a member (beam) connecting two nodes.
 // A unit cylinder is created and then scaled along Y to match the node distance.
 export function createMember(startNode, endNode, color = 0xcccccc) {
-    const geometry = new THREE.CylinderGeometry(0.004, 0.004, 1, 8);
+    const geometry = new THREE.CylinderGeometry(0.0025, 0.0025, 1, 8);
     const material = new THREE.MeshStandardMaterial({
         color: color,
         roughness: 0.7,
