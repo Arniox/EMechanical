@@ -1,18 +1,27 @@
 // src/main.js
 import * as THREE from "three";
-import { OrbitControls } from "/three/addons/controls/OrbitControls.js";
-import { TransformControls } from "/three/addons/controls/TransformControls.js";
-
 import { startAnimationLoop, handleResize } from "./render.js";
 import {
     createNode,
     createMember,
     deleteNode,
-    updateAllMembers,
+    addSelectionOutline,
+    removeSelectionOutline,
     nodes,
     setScene,
 } from "./objects.js";
-import { setupWorld } from "./world.js";
+import {
+    setupWorld,
+    setupCamera,
+    setupRenderer,
+    setupControls,
+    setupTransformControls,
+    clearMovementSelection,
+    clearConnectionSelection,
+    attachGizmoToNode,
+    gizmoIntersecting,
+    setGizmoIntersecting,
+} from "./world.js";
 
 // --- DOM Container ---
 export const container = document.getElementById("canvasContainer");
@@ -20,128 +29,33 @@ if (!container) {
     throw new Error("Could not find canvas container element!");
 }
 
-//#region Scene & Renderer Setup
 export const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x333333); // Dark Gray
 
-// Set the scene in objects.js
+// --- Scene Setup ---
 setScene(scene);
 
 // --- Camera Setup ---
-export const camera = new THREE.PerspectiveCamera(
-    75,
-    container.clientWidth / container.clientHeight,
-    0.1,
-    1000
-);
-camera.position.set(1.2, 1.2, 1.8); // Closer view
-camera.lookAt(0, 0, 0); // Ensure it looks at the center
+export const camera = setupCamera(container);
 
 // --- Renderer Setup ---
-export const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(container.clientWidth, container.clientHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-container.appendChild(renderer.domElement);
-//#endregion
+export const renderer = setupRenderer(container);
 
-// Call our world setup function.
+// --- World Setup ---
 setupWorld(scene);
 
-//#region Controls
-export const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0, 0); // Explicitly set target to origin
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-controls.screenSpacePanning = true;
-controls.minDistance = 0.5;
-controls.maxDistance = 10;
-controls.mouseButtons = {
-    LEFT: THREE.MOUSE.ROTATE,
-    MIDDLE: THREE.MOUSE.PAN,
-    RIGHT: THREE.MOUSE.ROTATE,
-};
-
-function resetView() {
-    camera.position.set(1.2, 1.2, 1.8);
-    camera.lookAt(0, 0, 0);
-    controls.target.set(0, 0, 0);
-    controls.update();
-}
-document.getElementById("resetView").addEventListener("click", resetView);
-document.getElementById("showGrid").addEventListener("change", (e) => {
-    gridHelper.visible = e.target.checked;
-});
-//#endregion
+// --- Controls Setup ---
+setupControls(camera, renderer);
+setupTransformControls(scene, camera, renderer);
 
 //#region Object Interaction & Selection
-let selectedNode = null; // For movement mode.
-let connectionNodes = []; // For multi-select connection mode (via Ctrl‑click).
-
 export const raycaster = new THREE.Raycaster();
 export const mouse = new THREE.Vector2();
 
-// Set up TransformControls for moving nodes.
-export let transformControls = new TransformControls(
-    camera,
-    renderer.domElement
-);
-scene.add(transformControls.getHelper());
-transformControls.setMode("translate");
-transformControls.setSize(0.5); // Increase gizmo size so it's more visible
-// Disable OrbitControls when TransformControls is active.
-transformControls.addEventListener("mouseDown", () => {
-    controls.enabled = false;
-});
-transformControls.addEventListener("mouseUp", () => {
-    controls.enabled = true;
-});
-transformControls.addEventListener("objectChange", () => {
-    updateAllMembers();
-});
-
-// --- Helper functions for selection outlines ---
-function addSelectionOutline(node) {
-    // If an outline already exists, do nothing.
-    if (node.userData.selectionOutline) return;
-    const outlineGeom = node.geometry.clone();
-    const outlineMat = new THREE.MeshBasicMaterial({
-        color: 0xffff00,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.4,
-    });
-    const outlineMesh = new THREE.Mesh(outlineGeom, outlineMat);
-    // Position relative to the node (so it moves with it)
-    outlineMesh.position.set(0, 0, 0);
-    outlineMesh.rotation.set(0, 0, 0);
-    outlineMesh.scale.copy(node.scale).multiplyScalar(1.1);
-    node.add(outlineMesh); // Attach as child
-    node.userData.selectionOutline = outlineMesh;
-}
-
-function removeSelectionOutline(node) {
-    if (node.userData.selectionOutline) {
-        // Remove the outline from the node rather than from the scene.
-        node.remove(node.userData.selectionOutline);
-        delete node.userData.selectionOutline;
-    }
-}
-
-function clearMovementSelection() {
-    if (selectedNode) {
-        removeSelectionOutline(selectedNode);
-        selectedNode = null;
-        transformControls.detach();
-    }
-}
-
-function clearConnectionSelection() {
-    connectionNodes.forEach(node => removeSelectionOutline(node));
-    connectionNodes = [];
-    document.getElementById('addMember').disabled = true;
-}
+// --- HTML Helper Functions ---
+let selectedNode = null; // For movement mode.
+let connectionNodes = []; // For multi-select connection mode (via Ctrl‑click).
+let keyState = {}; // For key state tracking
 
 function updateConnectButtonState() {
     document.getElementById('addMember').disabled = (connectionNodes.length !== 2);
@@ -152,6 +66,8 @@ function updateSelectedObjectInfo(text) {
     infoElement.textContent = text;
     document.getElementById('deleteSelected').disabled = !selectedNode;
     const forcePanel = document.getElementById('forceInput');
+
+    // Display properties or not
     if (selectedNode && connectionNodes.length === 0) {
         forcePanel.style.display = 'block';
         if (selectedNode.userData.forces) {
@@ -175,7 +91,13 @@ function onMouseClick(event) {
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(nodes, true);
 
-    if (intersects.length > 0) {
+    if (intersects.length > 0 || gizmoIntersecting()) {
+        // If currently clicking on the transform controls, ignore the click event.
+        if (gizmoIntersecting()) {
+            setGizmoIntersecting(false);
+            return;
+        }
+
         // Get the top-level node (in case the intersection hits a child, like the outline)
         let clickedNode = intersects[0].object;
         for (let n of nodes) {
@@ -184,8 +106,11 @@ function onMouseClick(event) {
                 break;
             }
         }
-        if (event.ctrlKey) {
-            clearMovementSelection();
+        if (keyState.ControlLeft) {
+            // Handle the currently selected node
+            attachGizmoToNode(null); // Detach gizmo if Ctrl‑clicking
+
+            // Handle the next clicked node
             const idx = connectionNodes.indexOf(clickedNode);
             if (idx !== -1) {
                 connectionNodes.splice(idx, 1);
@@ -201,23 +126,48 @@ function onMouseClick(event) {
             updateConnectButtonState();
             updateSelectedObjectInfo(`Selected ${connectionNodes.length} node(s) for connection (Ctrl‑click)`);
         } else {
-            clearConnectionSelection();
-            clearMovementSelection();
+            connectionNodes = clearConnectionSelection(connectionNodes);
+            selectedNode = clearMovementSelection(selectedNode);
+
+            // Re-Select everything after clearing all previous selections
             selectedNode = clickedNode;
+            connectionNodes.push(selectedNode);
             addSelectionOutline(selectedNode);
-            transformControls.attach(selectedNode);
+            attachGizmoToNode(selectedNode);
             updateSelectedObjectInfo("Selected node for movement");
         }
     } else {
         // Clear selection immediately on single click on empty space
-        clearMovementSelection();
-        clearConnectionSelection();
+        selectedNode = clearMovementSelection(selectedNode);
+        connectionNodes = clearConnectionSelection(connectionNodes);
         updateSelectedObjectInfo("No object selected");
     }
 }
+
+//#region Event Listeners
 renderer.domElement.addEventListener('click', onMouseClick);
 
-// Toolbar Button Listeners
+document.addEventListener('keydown', (event) => {
+    keyState[event.code] = true;
+    if (keyState.ControlLeft) {
+        // Ctrl key pressed
+        updateSelectedObjectInfo(`Ready for end node (Ctrl‑click)`);
+    }
+});
+
+document.addEventListener('keyup', (event) => {
+    if (selectedNode && keyState.ControlLeft) {
+        // Ctrl key released
+        updateSelectedObjectInfo("Selected node for movement");
+    }
+    else if (keyState.ControlLeft) {
+        // Ctrl key released without selecting a node
+        connectionNodes = clearConnectionSelection(connectionNodes);
+        updateSelectedObjectInfo("No object selected");
+    }
+    keyState[event.code] = false;
+});
+
 document.getElementById('addNode').addEventListener('click', () => {
     const pos = new THREE.Vector3(
         (Math.random() - 0.5) * 0.8,
@@ -230,7 +180,7 @@ document.getElementById('addNode').addEventListener('click', () => {
 document.getElementById('addMember').addEventListener('click', () => {
     if (connectionNodes.length === 2) {
         createMember(connectionNodes[0], connectionNodes[1]);
-        clearConnectionSelection();
+        connectionNodes = clearConnectionSelection(connectionNodes);
         updateSelectedObjectInfo("Connected nodes");
     } else {
         alert("Please Ctrl‑click to select exactly 2 nodes to connect.");
@@ -240,7 +190,7 @@ document.getElementById('addMember').addEventListener('click', () => {
 document.getElementById('deleteSelected').addEventListener('click', () => {
     if (selectedNode) {
         deleteNode(selectedNode);
-        clearMovementSelection();
+        selectedNode = clearMovementSelection(selectedNode);
         updateSelectedObjectInfo("No object selected");
     }
 });

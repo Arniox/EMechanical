@@ -1,56 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mechanical System Analyzer</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="icon" href="data:," />
-  </head>
-  <body>
-    <div id="toolbar">
-      <h2>Tools</h2>
-      <div class="tool-section">
-        <h3>View</h3>
-        <button id="resetView">Reset View</button>
-        <div class="checkbox-group">
-          <input type="checkbox" id="showGrid" checked />
-          <label for="showGrid">Show Grid</label>
-        </div>
-      </div>
-
-      <div class="tool-section">
-        <h3>Structure</h3>
-        <button id="addNode">Add Node</button>
-        <button id="addMember">Connect Nodes</button>
-      </div>
-
-      <div class="tool-section">
-        <h3>Properties</h3>
-        <div class="form-group" id="forceInput" style="display: none">
-          <label>Force Vector (x, y, z):</label>
-          <input type="number" id="forceX" step="0.1" value="0" />
-          <input type="number" id="forceY" step="0.1" value="0" />
-          <input type="number" id="forceZ" step="0.1" value="0" />
-          <button id="applyForce">Apply Force</button>
-        </div>
-      </div>
-
-      <div class="tool-section">
-        <h3>Analysis</h3>
-        <button id="runAnalysis" disabled>Calculate Forces</button>
-        <div class="results-panel">
-          <p>Results will appear here...</p>
-        </div>
-      </div>
-
-      <div class="tool-section">
-        <h3>Selected Object</h3>
-        <p id="selectedObjectInfo">No object selected</p>
-        <button id="deleteSelected" disabled>Delete</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Mechanical System Analyzer</title>
+  <link href="style.css" rel="stylesheet" />
+  <link href="data:," rel="icon" />
+</head>
+<body>
+  <div id="toolbar">
+    <h2>Tools</h2>
+    <div class="tool-section">
+      <h3>View</h3>
+      <button id="resetView">Reset View</button>
+      <div class="checkbox-group">
+        <input checked id="showGrid" type="checkbox" />
+        <label for="showGrid">Show Grid</label>
       </div>
     </div>
-    <script type="importmap">
+
+    <div class="tool-section">
+      <h3>Structure</h3>
+      <button id="addNode">Add Node</button>
+      <button disabled id="addMember">Connect Nodes</button>
+    </div>
+
+    <div class="tool-section">
+      <h3>Properties</h3>
+      <div class="form-group" id="forceInput" style="display: none">
+        <label>Force Vector (x, y, z):</label>
+        <input id="forceX" step="0.1" type="number" value="0" />
+        <input id="forceY" step="0.1" type="number" value="0" />
+        <input id="forceZ" step="0.1" type="number" value="0" />
+        <button id="applyForce">Apply Force</button>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Analysis</h3>
+      <button disabled id="runAnalysis">Calculate Forces</button>
+      <div class="results-panel">
+        <p>Results will appear here...</p>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Selected Object</h3>
+      <p id="selectedObjectInfo">No object selected</p>
+      <button disabled id="deleteSelected">Delete</button>
+    </div>
+  </div>
+  <script type="importmap">
       {
         "imports": {
           "three": "../node_modules/three/build/three.module.js",
@@ -58,7 +58,7 @@
         }
       }
     </script>
-    <div id="canvasContainer"></div>
-    <script type="module" src="./src/main.js"></script>
-  </body>
+  <div id="canvasContainer"></div>
+  <script src="./src/main.js" type="module"></script>
+</body>
 </html>

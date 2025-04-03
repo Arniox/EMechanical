@@ -1,6 +1,17 @@
 // src/world.js
 import * as THREE from 'three';
+import { OrbitControls } from "/three/addons/controls/OrbitControls.js";
+import { TransformControls } from "/three/addons/controls/TransformControls.js";
+import {
+  updateAllMembers,
+  removeSelectionOutline
+} from './objects.js';
 
+let controls = null;
+let transformControls = null;
+let isIntersectingTransformControls = false;
+
+// --- Setup Functions ---
 export function setupWorld(scene) {
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -28,13 +39,13 @@ export function setupWorld(scene) {
   const halfSize = worldSize / 2;
   const vertices = [
     new THREE.Vector3(-halfSize, -halfSize, -halfSize),
-    new THREE.Vector3( halfSize, -halfSize, -halfSize),
-    new THREE.Vector3( halfSize,  halfSize, -halfSize),
-    new THREE.Vector3(-halfSize,  halfSize, -halfSize),
-    new THREE.Vector3(-halfSize, -halfSize,  halfSize),
-    new THREE.Vector3( halfSize, -halfSize,  halfSize),
-    new THREE.Vector3( halfSize,  halfSize,  halfSize),
-    new THREE.Vector3(-halfSize,  halfSize,  halfSize)
+    new THREE.Vector3(halfSize, -halfSize, -halfSize),
+    new THREE.Vector3(halfSize, halfSize, -halfSize),
+    new THREE.Vector3(-halfSize, halfSize, -halfSize),
+    new THREE.Vector3(-halfSize, -halfSize, halfSize),
+    new THREE.Vector3(halfSize, -halfSize, halfSize),
+    new THREE.Vector3(halfSize, halfSize, halfSize),
+    new THREE.Vector3(-halfSize, halfSize, halfSize)
   ];
   const materialX = new THREE.LineBasicMaterial({ color: 0xff0000 });
   const materialY = new THREE.LineBasicMaterial({ color: 0x00ff00 });
@@ -62,4 +73,106 @@ export function setupWorld(scene) {
   // Grid Helper
   const gridHelper = new THREE.GridHelper(1, 10, 0x888888, 0x444444);
   scene.add(gridHelper);
+  document.getElementById("showGrid").addEventListener("change", (e) => {
+    gridHelper.visible = e.target.checked;
+  });
+}
+export function setupCamera(container) {
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    container.clientWidth / container.clientHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(1.2, 1.2, 1.8); // Closer view
+  camera.lookAt(0, 0, 0); // Ensure it looks at the center
+  return camera;
+}
+export function setupRenderer(container) {
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+  return renderer;
+}
+export function setupControls(camera, renderer) {
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0, 0); // Explicitly set target to origin
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.screenSpacePanning = true;
+  controls.minDistance = 0.5;
+  controls.maxDistance = 10;
+  controls.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.PAN,
+    RIGHT: THREE.MOUSE.ROTATE,
+  };
+
+  const resetView = () => {
+    camera.position.set(1.2, 1.2, 1.8);
+    camera.lookAt(0, 0, 0);
+    controls.target.set(0, 0, 0);
+    controls.update();
+  }
+
+  document.getElementById("resetView").addEventListener("click", resetView);
+}
+export function setupTransformControls(scene, camera, renderer) {
+  transformControls = new TransformControls(
+    camera,
+    renderer.domElement
+  );
+  scene.add(transformControls.getHelper());
+  transformControls.setMode("translate");
+  transformControls.setSize(0.5); // Increase gizmo size so it's more visible
+
+  // Disable OrbitControls when TransformControls is active.
+  transformControls.addEventListener("mouseDown", () => {
+    controls.enabled = false;
+    isIntersectingTransformControls = true;
+  });
+  transformControls.addEventListener("mouseUp", () => {
+    controls.enabled = true;
+  });
+  transformControls.addEventListener("objectChange", () => {
+    updateAllMembers();
+  });
+}
+
+// --- Handlers ---
+export function clearMovementSelection(selectedNode) {
+  if (selectedNode) {
+    removeSelectionOutline(selectedNode);
+    transformControls.detach();
+  }
+  return null;
+}
+export function clearConnectionSelection(connectionNodes) {
+  connectionNodes.forEach(node => removeSelectionOutline(node));
+  document.getElementById('addMember').disabled = true;
+  return [];
+}
+export function attachGizmoToNode(selectedNode) {
+  if (selectedNode) {
+    transformControls.attach(selectedNode);
+  } else {
+    transformControls.detach();
+  }
+}
+export function gizmoIntersecting() {
+  return isIntersectingTransformControls;
+}
+export function setGizmoIntersecting(value) {
+  isIntersectingTransformControls = value;
+}
+
+// --- For Render Loop ---
+export function updateTransformControls() {
+  transformControls.update(); // Ensure gizmo updates
+}
+export function updateControls() {
+  controls.update();
 }

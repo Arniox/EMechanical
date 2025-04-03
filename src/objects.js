@@ -91,3 +91,32 @@ export function deleteMember(member) {
         members.splice(index, 1);
     }
 }
+
+// Add a selection outline to a node. This is a wireframe mesh that is slightly larger than the original node.
+export function addSelectionOutline(node) {
+    // If an outline already exists, do nothing.
+    if (node.userData.selectionOutline) return;
+    const outlineGeom = node.geometry.clone();
+    const outlineMat = new THREE.MeshBasicMaterial({
+        color: 0xffff00,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.4,
+    });
+    const outlineMesh = new THREE.Mesh(outlineGeom, outlineMat);
+    // Position relative to the node (so it moves with it)
+    outlineMesh.position.set(0, 0, 0);
+    outlineMesh.rotation.set(0, 0, 0);
+    outlineMesh.scale.copy(node.scale).multiplyScalar(1.1);
+    node.add(outlineMesh); // Attach as child
+    node.userData.selectionOutline = outlineMesh;
+}
+
+// Remove the selection outline from a node. This is called when the node is deselected or deleted.
+export function removeSelectionOutline(node) {
+    if (node.userData.selectionOutline) {
+        // Remove the outline from the node rather than from the scene.
+        node.remove(node.userData.selectionOutline);
+        delete node.userData.selectionOutline;
+    }
+}

@@ -1,16 +1,15 @@
 // src/render.js
-import { scene, camera, renderer, controls, container, transformControls } from './main.js';
-import { runComputations } from './computation.js'; // Import computation function
+import { scene, camera, renderer, container } from './main.js';
+import { updateControls, updateTransformControls } from './world.js';
+import { runComputations } from './computation.js';
 
 // The core animation function
 function animate() {
     requestAnimationFrame(animate); // Loop
 
-    // Update controls (for damping)
-    controls.update();
-
     // Run computation checks/updates (currently empty)
-    transformControls.update(); // Ensure gizmo updates
+    updateControls();
+    updateTransformControls();
     runComputations();
 
     // Render the scene
