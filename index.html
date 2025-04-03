@@ -17,6 +17,34 @@
         <input checked id="showGrid" type="checkbox" />
         <label for="showGrid">Show Grid</label>
       </div>
+
+      <!-- World Scale -->
+      <div class="form-group">
+        <label for="worldSizeInput">World Size:</label>
+        <input id="worldSizeInput" max="1000" min="1" type="range" value="1" />
+        <span id="worldSizeValue">1 m</span>
+      </div>
+      <div class="form-group">
+        <label for="unitSelect">Unit:</label>
+        <select id="unitSelect">
+          <option value="pm">Picometer</option>
+          <option value="nm">Nanometer</option>
+          <option value="μm">Micrometer</option>
+          <option value="mm">Millimeter</option>
+          <option value="cm">Centermeter</option>
+          <option selected value="m">Meter</option>
+          <option value="km">Kilometer</option>
+          <option value="au">Astronimcal Unit</option>
+          <option value="ly">Light Year</option>
+          <option value="pc">Parsec</option>
+          <option value="in">Inch</option>
+          <option value="ft">Foot</option>
+          <option value="yd">Yard</option>
+          <option value="mi">Mile</option>
+          <option value="ftm">Fathom</option>
+          <option value="nmi">Nautical Mile</option>
+        </select>
+      </div>
     </div>
 
     <div class="tool-section">

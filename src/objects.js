@@ -1,5 +1,6 @@
 // src/objects.js
 import * as THREE from "three";
+import { getWorldSize } from "./computation.js";
 
 let scene = null;
 export function setScene(s) {
@@ -8,6 +9,7 @@ export function setScene(s) {
 
 export let nodes = [];
 export let members = [];
+const arrowScaling = 0.1;
 
 export function createNode(position) {
     const geometry = new THREE.SphereGeometry(0.015, 16, 16);
@@ -24,6 +26,34 @@ export function createNode(position) {
     nodes.push(node);
     return node;
 }
+
+export function createForceVisualization(node) {
+    if (node.userData.forceArrow) {
+        // Remove existing arrow
+        node.parent.remove(node.userData.forceArrow);
+    }
+    const force = new THREE.Vector3(
+        node.userData.forces.x / getWorldSize(),
+        node.userData.forces.y / getWorldSize(),
+        node.userData.forces.z / getWorldSize()
+    );
+    if (force.length() === 0) {
+        return;
+    }
+    const arrowHelper = new THREE.ArrowHelper(
+        force.clone().normalize(),
+        node.position,
+        force.length() * arrowScaling,
+        0xffa500,
+        0.025,
+        0.01
+    );
+    node.parent.add(arrowHelper);
+    node.userData.forceArrow = arrowHelper;
+}
+
+// Update a node's force visualization based on its current force vector and node position
+
 
 // Create a member (beam) connecting two nodes.
 // A unit cylinder is created and then scaled along Y to match the node distance.

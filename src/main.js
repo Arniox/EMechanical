@@ -22,7 +22,12 @@ import {
     gizmoIntersecting,
     setGizmoIntersecting,
 } from "./world.js";
-import { constrainNumber, applyForceToNode } from "./computation.js";
+import {
+    stringifiyUnit,
+    getWorldScale,
+    constrainNumber,
+    applyForceToNode
+} from "./computation.js";
 
 // --- DOM Container ---
 export const container = document.getElementById("canvasContainer");
@@ -31,7 +36,7 @@ if (!container) {
 }
 
 export const scene = new THREE.Scene();
-export const worldSize = 1.0;
+export let worldSize = 1.0;
 scene.background = new THREE.Color(0x333333); // Dark Gray
 
 // --- Scene Setup ---
@@ -221,6 +226,26 @@ document.getElementById('applyForce').addEventListener('click', () => {
     if (selectedNode) {
         applyForceToNode(selectedNode, new THREE.Vector3(xValue, yValue, zValue));
     }
+});
+
+document.getElementById("worldSizeInput").addEventListener("input", (event) => {
+    const newSize = parseFloat(event.target.value);
+    const unit = document.getElementById("unitSelect").value;
+    const worldScaleOutput = unit === 'm' ? '' : ` - <span class="unitConversionResult">${stringifiyUnit(getWorldScale())} m</span>`;
+
+    // Set
+    document.getElementById("worldSizeValue").innerHTML = `${newSize} ${unit}${worldScaleOutput}`;
+    worldSize = newSize; // Update the global world size
+});
+
+document.getElementById("unitSelect").addEventListener("change", (event) => {
+    const newSize = parseFloat(document.getElementById("worldSizeInput").value);
+    const unit = event.target.value;
+    const worldScaleOutput = unit === 'm' ? '' : ` - <span class="unitConversionResult">${stringifiyUnit(getWorldScale())} m</span>`;
+
+    // Set
+    document.getElementById("worldSizeValue").innerHTML = `${newSize} ${unit}${worldScaleOutput}`;
+    worldSize = newSize; // Update the global world size
 });
 //#endregion
 

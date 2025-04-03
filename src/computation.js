@@ -1,8 +1,26 @@
 // src/computation.js
 import * as THREE from "three";
-import { nodes, members } from './objects.js';
+import { nodes, members, createForceVisualization } from './objects.js';
 
-const arrowScaling = 0.1;
+// Conversion factors from meter to the desired unit.
+const unitConversion = {
+    "pm": 1e-12,
+    "nm": 1e-9,
+    "μm": 1e-6,
+    "mm": 1e-3,
+    "cm": 1e-2,
+    "m": 1,
+    "km": 1e3,
+    "au": 149597870700,
+    "ly": 9.4607e15,
+    "pc": 3.08567758149137e16,
+    "in": 0.0254,
+    "ft": 0.3048,
+    "yd": 0.9144,
+    "mi": 1609.344,
+    "ftm": 1.8288,
+    "nmi": 1852,
+};
 
 export function runComputations() {
     // This could be triggered by the "Calculate Forces" button
@@ -94,6 +112,7 @@ export function toggleNodeFixed(node) {
     return false;
 }
 
+// Function to apply a force vector to a node
 export function applyForceToNode(node, forceVector) {
     if (node && node.userData.type === 'node') {
         // Further constrain the force vector to be within a quarter of the world size
@@ -102,37 +121,72 @@ export function applyForceToNode(node, forceVector) {
             y: forceVector.y,
             z: forceVector.z
         };
-        updateForceVisualization(node);
+        createForceVisualization(node);
         return true;
     }
     return false;
 }
 
-function updateForceVisualization(node) {
-    if (node.userData.forceArrow) {
-        // Remove existing arrow
-        node.parent.remove(node.userData.forceArrow);
-    }
-    const force = new THREE.Vector3(
-        node.userData.forces.x,
-        node.userData.forces.y,
-        node.userData.forces.z
-    );
-    if (force.length() === 0) {
-        return;
-    }
-    const arrowHelper = new THREE.ArrowHelper(
-        force.clone().normalize(),
-        node.position,
-        force.length() * arrowScaling,
-        0xffa500,
-        0.025,
-        0.01
-    );
-    node.parent.add(arrowHelper);
-    node.userData.forceArrow = arrowHelper;
+// Math functionality
+/**
+ * Returns the raw world size value (from the slider)
+ * @returns 
+ */
+export function getWorldSize() {
+    const slider = document.getElementById("worldSizeInput");
+    return slider ? parseFloat(slider.value) : 1;
 }
+/**
+ * Converts a raw world size value to scaled units based on the provided unit.
+ * rawValue is in the base meter units.
+ * @param {string} unit 
+ * @param {number} rawValue 
+ * @returns 
+ */
+export function convertUnit(unit, rawValue) {
+    const factor = unitConversion[unit] || 1;
+    return rawValue * factor;
+}
+/**
+ * Returns the effective world scale: raw world size multiplied by the conversion factor.
+ * @returns 
+ */
+export function getWorldScale() {
+    const select = document.getElementById("unitSelect");
+    const unit = select ? select.value : "m";
+    const raw = getWorldSize();
+    return convertUnit(unit, raw);
+}
+/**
+ * This function converts a number into scientific notation (using toExponential) and then adjusts the significand (mantissa) 
+ * so that it is no longer than 5 characters (excluding the "e…")—leaving room for the exponent.
+ * @param {number} num 
+ * @returns 
+ */
+export function stringifiyUnit(num) {
+    // First, check the plain string version.
+    let plain = num.toString();
+    if (!plain.includes("e") && plain.length <= 7) {
+        return plain;
+    }
 
+    // Otherwise, try exponential notation with decreasing fraction digits.
+    for (let frac = 6; frac >= 0; frac--) {
+        let expStr = num.toExponential(frac); // e.g., "1.234560e+3"
+        let [mantissa, exponent] = expStr.split("e");
+        // Remove the decimal point to count only digits.
+        let digits = mantissa.replace(".", "");
+        if (digits.length <= 7) {
+            // If the exponent is zero, return just the mantissa.
+            if (parseInt(exponent, 10) === 0) {
+                return mantissa;
+            }
+            return mantissa + "e" + exponent;
+        }
+    }
+    // Fallback
+    return num.toExponential(0);
+}
 function mapRangeToRange(n, start1, stop1, start2, stop2, withinBounds) {
     const newval = (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
     if (!withinBounds) {
@@ -144,7 +198,6 @@ function mapRangeToRange(n, start1, stop1, start2, stop2, withinBounds) {
         return constrainNumber(newval, stop2, start2);
     }
 }
-
 export function constrainNumber(n, low, high) {
     return Math.max(Math.min(n, high), low);
 }
