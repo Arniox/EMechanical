@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from "/three/addons/controls/OrbitControls.js";
 import { TransformControls } from "/three/addons/controls/TransformControls.js";
+import { worldSize } from './main.js';
 import {
   updateAllMembers,
   removeSelectionOutline
@@ -35,7 +36,6 @@ export function setupWorld(scene) {
   scene.add(fillLight);
 
   // World Cube
-  const worldSize = 1.0;
   const halfSize = worldSize / 2;
   const vertices = [
     new THREE.Vector3(-halfSize, -halfSize, -halfSize),

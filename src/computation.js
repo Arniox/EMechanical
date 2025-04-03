@@ -2,6 +2,8 @@
 import * as THREE from "three";
 import { nodes, members } from './objects.js';
 
+const arrowScaling = 0.1;
+
 export function runComputations() {
     // This could be triggered by the "Calculate Forces" button
     // For now, it's just a placeholder
@@ -94,6 +96,7 @@ export function toggleNodeFixed(node) {
 
 export function applyForceToNode(node, forceVector) {
     if (node && node.userData.type === 'node') {
+        // Further constrain the force vector to be within a quarter of the world size
         node.userData.forces = {
             x: forceVector.x,
             y: forceVector.y,
@@ -121,11 +124,27 @@ function updateForceVisualization(node) {
     const arrowHelper = new THREE.ArrowHelper(
         force.clone().normalize(),
         node.position,
-        force.length() * 0.1,
-        0xffff00,
-        0.05,
-        0.02
+        force.length() * arrowScaling,
+        0xffa500,
+        0.025,
+        0.01
     );
     node.parent.add(arrowHelper);
     node.userData.forceArrow = arrowHelper;
+}
+
+function mapRangeToRange(n, start1, stop1, start2, stop2, withinBounds) {
+    const newval = (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    if (!withinBounds) {
+        return newval;
+    }
+    if (start2 < stop2) {
+        return constrainNumber(newval, start2, stop2);
+    } else {
+        return constrainNumber(newval, stop2, start2);
+    }
+}
+
+export function constrainNumber(n, low, high) {
+    return Math.max(Math.min(n, high), low);
 }

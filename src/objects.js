@@ -12,8 +12,8 @@ export let members = [];
 export function createNode(position) {
     const geometry = new THREE.SphereGeometry(0.015, 16, 16);
     const material = new THREE.MeshStandardMaterial({
-        color: 0x4287f5, // default blue
-        roughness: 0.5,
+        color: 0xa0f0f0, // default blue
+        roughness: 0.25,
         metalness: 0.5
     });
     const node = new THREE.Mesh(geometry, material);

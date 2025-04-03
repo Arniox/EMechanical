@@ -22,6 +22,7 @@ import {
     gizmoIntersecting,
     setGizmoIntersecting,
 } from "./world.js";
+import { constrainNumber, applyForceToNode } from "./computation.js";
 
 // --- DOM Container ---
 export const container = document.getElementById("canvasContainer");
@@ -30,6 +31,7 @@ if (!container) {
 }
 
 export const scene = new THREE.Scene();
+export const worldSize = 1.0;
 scene.background = new THREE.Color(0x333333); // Dark Gray
 
 // --- Scene Setup ---
@@ -68,7 +70,7 @@ function updateSelectedObjectInfo(text) {
     const forcePanel = document.getElementById('forceInput');
 
     // Display properties or not
-    if (selectedNode && connectionNodes.length === 0) {
+    if (selectedNode && connectionNodes.length <= 1) {
         forcePanel.style.display = 'block';
         if (selectedNode.userData.forces) {
             document.getElementById('forceX').value = selectedNode.userData.forces.x;
@@ -147,6 +149,13 @@ function onMouseClick(event) {
 //#region Event Listeners
 renderer.domElement.addEventListener('click', onMouseClick);
 
+// Setters
+document.querySelectorAll('.forceInput').forEach(input => {
+    input.setAttribute('max', worldSize);
+    input.setAttribute('min', -worldSize);
+});
+
+// Global Listeners
 document.addEventListener('keydown', (event) => {
     keyState[event.code] = true;
     if (keyState.ControlLeft) {
@@ -168,6 +177,7 @@ document.addEventListener('keyup', (event) => {
     keyState[event.code] = false;
 });
 
+// Specific Listeners
 document.getElementById('addNode').addEventListener('click', () => {
     const pos = new THREE.Vector3(
         (Math.random() - 0.5) * 0.8,
@@ -196,12 +206,20 @@ document.getElementById('deleteSelected').addEventListener('click', () => {
 });
 
 document.getElementById('applyForce').addEventListener('click', () => {
+    let xValue = parseFloat(document.getElementById('forceX').value) || 0;
+    let yValue = parseFloat(document.getElementById('forceY').value) || 0;
+    let zValue = parseFloat(document.getElementById('forceZ').value) || 0;
+    // Constrain
+    xValue = constrainNumber(xValue, -worldSize, worldSize);
+    yValue = constrainNumber(yValue, -worldSize, worldSize);
+    zValue = constrainNumber(zValue, -worldSize, worldSize);
+    // Update input fields
+    document.getElementById('forceX').value = xValue;
+    document.getElementById('forceY').value = yValue;
+    document.getElementById('forceZ').value = zValue;
+    // Set force
     if (selectedNode) {
-        const fx = parseFloat(document.getElementById('forceX').value) || 0;
-        const fy = parseFloat(document.getElementById('forceY').value) || 0;
-        const fz = parseFloat(document.getElementById('forceZ').value) || 0;
-        // Call your force function from computation.js if needed:
-        // applyForceToNode(selectedNode, new THREE.Vector3(fx, fy, fz));
+        applyForceToNode(selectedNode, new THREE.Vector3(xValue, yValue, zValue));
     }
 });
 //#endregion
