@@ -1,33 +1,7 @@
 // src/main.js
 import * as THREE from "three";
+import { World } from "./world/world.js";
 import { startAnimationLoop, handleResize } from "./render.js";
-import {
-    createNode,
-    createMember,
-    deleteNode,
-    addSelectionOutline,
-    removeSelectionOutline,
-    nodes,
-    setScene,
-} from "./objects.js";
-import {
-    setupWorld,
-    setupCamera,
-    setupRenderer,
-    setupControls,
-    setupTransformControls,
-    clearMovementSelection,
-    clearConnectionSelection,
-    attachGizmoToNode,
-    gizmoIntersecting,
-    setGizmoIntersecting,
-} from "./world.js";
-import {
-    stringifiyUnit,
-    getWorldScale,
-    constrainNumber,
-    applyForceToNode
-} from "./computation.js";
 
 // --- DOM Container ---
 export const container = document.getElementById("canvasContainer");
@@ -35,62 +9,35 @@ if (!container) {
     throw new Error("Could not find canvas container element!");
 }
 
-export const scene = new THREE.Scene();
-export let worldSize = 1.0;
-scene.background = new THREE.Color(0x333333); // Dark Gray
+// Create a new world instance
+export const world = new World();
 
-// --- Scene Setup ---
-setScene(scene);
-
-// --- Camera Setup ---
-export const camera = setupCamera(container);
-
-// --- Renderer Setup ---
-export const renderer = setupRenderer(container);
-
-// --- World Setup ---
-setupWorld(scene);
-
-// --- Controls Setup ---
-setupControls(camera, renderer);
-setupTransformControls(scene, camera, renderer);
-
-//#region Object Interaction & Selection
 export const raycaster = new THREE.Raycaster();
 export const mouse = new THREE.Vector2();
 
-// --- HTML Helper Functions ---
-let selectedNode = null; // For movement mode.
-let connectionNodes = []; // For multi-select connection mode (via Ctrl‑click).
+
 let keyState = {}; // For key state tracking
-
 function updateConnectButtonState() {
-    document.getElementById('addMember').disabled = (connectionNodes.length !== 2);
+    document.getElementById('addMember').disabled = world.nodeManager.isOnly2NodesSelected;
 }
-
 function updateSelectedObjectInfo(text) {
     const infoElement = document.getElementById('selectedObjectInfo');
     infoElement.textContent = text;
-    document.getElementById('deleteSelected').disabled = !selectedNode;
+    document.getElementById('deleteSelected').disabled = world.nodeManager.isOnly1NodeSelected;
     const forcePanel = document.getElementById('forceInput');
 
     // Display properties or not
-    if (selectedNode && connectionNodes.length <= 1) {
+    if (world.nodeManager.isOnly1NodeSelected) {
         forcePanel.style.display = 'block';
-        if (selectedNode.userData.forces) {
-            document.getElementById('forceX').value = selectedNode.userData.forces.x;
-            document.getElementById('forceY').value = selectedNode.userData.forces.y;
-            document.getElementById('forceZ').value = selectedNode.userData.forces.z;
-        } else {
-            document.getElementById('forceX').value = 0;
-            document.getElementById('forceY').value = 0;
-            document.getElementById('forceZ').value = 0;
-        }
+
+        // Set inputs to current values
+        document.getElementById('forceX').value = world.nodeManager.selectedNode(1).force.vector.x;
+        document.getElementById('forceY').value = world.nodeManager.selectedNode(1).force.vector.y;
+        document.getElementById('forceZ').value = world.nodeManager.selectedNode(1).force.vector.z;
     } else {
         forcePanel.style.display = 'none';
     }
 }
-
 function onMouseClick(event) {
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -151,15 +98,6 @@ function onMouseClick(event) {
     }
 }
 
-//#region Event Listeners
-renderer.domElement.addEventListener('click', onMouseClick);
-
-// Setters
-document.querySelectorAll('.forceInput').forEach(input => {
-    input.setAttribute('max', worldSize);
-    input.setAttribute('min', -worldSize);
-});
-
 // Global Listeners
 document.addEventListener('keydown', (event) => {
     keyState[event.code] = true;
@@ -170,13 +108,12 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.addEventListener('keyup', (event) => {
-    if (selectedNode && keyState.ControlLeft) {
+    if (world.nodeManager.isAnySelected && keyState.ControlLeft) {
         // Ctrl key released
         updateSelectedObjectInfo("Selected node for movement");
     }
     else if (keyState.ControlLeft) {
         // Ctrl key released without selecting a node
-        connectionNodes = clearConnectionSelection(connectionNodes);
         updateSelectedObjectInfo("No object selected");
     }
     keyState[event.code] = false;
@@ -184,28 +121,30 @@ document.addEventListener('keyup', (event) => {
 
 // Specific Listeners
 document.getElementById('addNode').addEventListener('click', () => {
-    const pos = new THREE.Vector3(
+    const position = new THREE.Vector3(
         (Math.random() - 0.5) * 0.8,
         (Math.random() - 0.5) * 0.8,
         (Math.random() - 0.5) * 0.8
     );
-    createNode(pos);
+    world.nodeManager.createNode(position, world.scene);
 });
 
 document.getElementById('addMember').addEventListener('click', () => {
-    if (connectionNodes.length === 2) {
-        createMember(connectionNodes[0], connectionNodes[1]);
-        connectionNodes = clearConnectionSelection(connectionNodes);
+    if (world.nodeManager.isOnly2NodesSelected) {
+        world.nodeManager.createBeam(
+            world.nodeManager.selectedNode(1),
+            world.nodeManager.selectedNode(2),
+            world.scene
+        );
         updateSelectedObjectInfo("Connected nodes");
     } else {
-        alert("Please Ctrl‑click to select exactly 2 nodes to connect.");
+        updateSelectedObjectInfo("Please Ctrl‑click to select exactly 2 nodes to connect.");
     }
 });
 
 document.getElementById('deleteSelected').addEventListener('click', () => {
-    if (selectedNode) {
-        deleteNode(selectedNode);
-        selectedNode = clearMovementSelection(selectedNode);
+    if (world.nodeManager.isAnySelected) {
+        world.nodeManager.selectedNode(1).delete(world.scene);
         updateSelectedObjectInfo("No object selected");
     }
 });
@@ -247,7 +186,6 @@ document.getElementById("unitSelect").addEventListener("change", (event) => {
     document.getElementById("worldSizeValue").innerHTML = `${newSize} ${unit}${worldScaleOutput}`;
     worldSize = newSize; // Update the global world size
 });
-//#endregion
 
 window.addEventListener('resize', handleResize);
 startAnimationLoop();
