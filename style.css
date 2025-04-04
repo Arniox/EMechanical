@@ -5,6 +5,7 @@
     padding: 0;
     --toolbar-width: 320px;
 }
+
 html,
 body {
     height: 100%;
@@ -13,6 +14,7 @@ body {
     /* Prevent scrollbars */
     font-family: sans-serif;
 }
+
 body {
     display: flex;
     /* Use flexbox for layout */
@@ -29,9 +31,11 @@ body {
     flex-shrink: 0;
     overflow-y: auto;
 }
+
 #toolbar::-webkit-scrollbar {
     display: none;
 }
+
 #toolbar {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -48,6 +52,7 @@ body {
     pointer-events: none;
     background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7));
 }
+
 .toolbar-overlay::after {
     content: "▼";
     position: absolute;
@@ -60,10 +65,11 @@ body {
 }
 
 /* Only show the overlay if the toolbar has the "scrollable" class */
-#toolbar.scrollable + .toolbar-overlay {
+#toolbar.scrollable+.toolbar-overlay {
     display: block;
 }
-#toolbar:not(.scrollable) + .toolbar-overlay {
+
+#toolbar:not(.scrollable)+.toolbar-overlay {
     display: none;
 }
 
@@ -74,6 +80,7 @@ body {
     border-bottom: 1px solid #cccccc;
     padding-bottom: 5px;
 }
+
 #toolbar h3 {
     margin: 10px 0 5px;
     font-size: 16px;
@@ -98,9 +105,11 @@ button {
     cursor: pointer;
     font-size: 14px;
 }
+
 button:hover {
     background-color: #45a049;
 }
+
 button:disabled {
     background-color: #cccccc !important;
     cursor: not-allowed !important;
@@ -109,12 +118,15 @@ button:disabled {
 #resetView {
     background-color: #2196F3;
 }
+
 #resetView:hover {
     background-color: #0b7dda;
 }
+
 #deleteSelected {
     background-color: #f44336;
 }
+
 #deleteSelected:hover:not(:disabled) {
     background-color: #d32f2f;
 }
@@ -124,6 +136,7 @@ button:disabled {
     display: flex;
     align-items: center;
 }
+
 .checkbox-group input[type="checkbox"] {
     margin-right: 8px;
 }
@@ -131,10 +144,12 @@ button:disabled {
 .form-group {
     margin: 8px 0;
 }
+
 .form-group label {
     display: inline-block;
     margin-bottom: 3px;
 }
+
 .form-group input {
     width: 100%;
     padding: 5px;
