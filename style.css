@@ -3,8 +3,8 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    --toolbar-width: 320px;
 }
-
 html,
 body {
     height: 100%;
@@ -13,7 +13,6 @@ body {
     /* Prevent scrollbars */
     font-family: sans-serif;
 }
-
 body {
     display: flex;
     /* Use flexbox for layout */
@@ -21,45 +20,35 @@ body {
 
 /* Toolbar styling */
 #toolbar {
-    width: 320px;
-    /* Slightly wider toolbar */
+    position: relative;
+    width: var(--toolbar-width);
     height: 100vh;
-    /* Full viewport height */
     background-color: #f0f0f0;
-    /* Light background for toolbar */
     padding: 15px;
     border-right: 1px solid #cccccc;
     flex-shrink: 0;
-    /* Prevent toolbar from shrinking */
     overflow-y: auto;
-    /* Allow scrolling if content exceeds height */
-
-    /* Hide scrollbar in Firefox */
-    scrollbar-width: none;
-    /* Hide scrollbar in IE 10+ */
-    -ms-overflow-style: none;
-    position: relative;
-    /* Required for pseudo-elements */
 }
-
-/* Hide scrollbar in Chrome, Safari, Opera */
 #toolbar::-webkit-scrollbar {
     display: none;
 }
+#toolbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
 
-/* Add a fade at the bottom to indicate scrollability */
-#toolbar.scrollable::after {
-    content: "";
+/* Overlay: fixed at bottom */
+.toolbar-overlay {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     height: 40px;
-    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7));
+    width: var(--toolbar-width);
     pointer-events: none;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7));
 }
-
-#toolbar.scrollable::before {
+.toolbar-overlay::after {
     content: "▼";
     position: absolute;
     bottom: 8px;
@@ -70,6 +59,14 @@ body {
     pointer-events: none;
 }
 
+/* Only show the overlay if the toolbar has the "scrollable" class */
+#toolbar.scrollable + .toolbar-overlay {
+    display: block;
+}
+#toolbar:not(.scrollable) + .toolbar-overlay {
+    display: none;
+}
+
 /* Remaining styles */
 #toolbar h2 {
     margin-bottom: 15px;
@@ -77,7 +74,6 @@ body {
     border-bottom: 1px solid #cccccc;
     padding-bottom: 5px;
 }
-
 #toolbar h3 {
     margin: 10px 0 5px;
     font-size: 16px;
@@ -102,11 +98,9 @@ button {
     cursor: pointer;
     font-size: 14px;
 }
-
 button:hover {
     background-color: #45a049;
 }
-
 button:disabled {
     background-color: #cccccc !important;
     cursor: not-allowed !important;
@@ -115,15 +109,12 @@ button:disabled {
 #resetView {
     background-color: #2196F3;
 }
-
 #resetView:hover {
     background-color: #0b7dda;
 }
-
 #deleteSelected {
     background-color: #f44336;
 }
-
 #deleteSelected:hover:not(:disabled) {
     background-color: #d32f2f;
 }
@@ -133,7 +124,6 @@ button:disabled {
     display: flex;
     align-items: center;
 }
-
 .checkbox-group input[type="checkbox"] {
     margin-right: 8px;
 }
@@ -141,12 +131,10 @@ button:disabled {
 .form-group {
     margin: 8px 0;
 }
-
 .form-group label {
-    display: block;
+    display: inline-block;
     margin-bottom: 3px;
 }
-
 .form-group input {
     width: 100%;
     padding: 5px;

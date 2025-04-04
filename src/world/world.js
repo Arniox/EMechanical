@@ -197,12 +197,13 @@ export class World {
 
     /**
      * Updates the world, including the camera and controls.
+     * @param {number} deltaTime - The time elapsed since the last update.
      */
-    updateAll() {
+    updateAll(deltaTime) {
         this.controls.update();
         this.transformControls.controls.update();
-        this.nodeManager.updateAllNodes();
-        this.nodeManager.updateAllBeams();
+        this.nodeManager.updateAllNodes(deltaTime);
+        this.nodeManager.updateAllBeams(deltaTime);
     }
 
     delete() {
