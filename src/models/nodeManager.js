@@ -1,16 +1,13 @@
 import * as THREE from "three";
-import { Node } from './node.js';
+import { Joiner } from './node.js';
 import { Beam } from './beam.js';
+import Utilities from "../world/utilities.js";
 
 export class NodeManager {
     constructor() {
-        /**
-         * @type {Node[]}
-         */
+        /** @type {Joiner[]} */
         this.nodes = [];
-        /**
-         * @type {Beam[]}
-         */
+        /** @type {Beam[]} */
         this.beams = [];
     }
 
@@ -36,8 +33,29 @@ export class NodeManager {
     }
 
     /**
+     * @returns {Joiner[]}
+     */
+    get selectedNodes() {
+        return this.nodes.filter(node => node.isSelected);
+    }
+
+    /**
+     * @returns {THREE.Mesh[]}
+     */
+    get nodeMeshes() {
+        return this.nodes.map(node => node.mesh);
+    }
+
+    /**
+     * @returns {THREE.Mesh[]}
+     */
+    get beamMeshes() {
+        return this.beams.map(beam => beam.mesh);
+    }
+
+    /**
      * @param {number} index
-     * @returns {Node}
+     * @returns {Joiner}
      */
     selectedNode(index) {
         return this.nodes.find(node => node.isSelected && node.selectedIndex === index);
@@ -49,14 +67,14 @@ export class NodeManager {
      * @returns 
      */
     createNode(position, scene) {
-        const node = new Node(position);
+        const node = new Joiner(position);
         node.add(scene);
         this.nodes.push(node);
         return node;
     }
 
     /**
-     * @param {Node} node 
+     * @param {Joiner} node 
      * @param {THREE.Scene} scene 
      */
     deleteNode(node, scene) {
@@ -74,8 +92,8 @@ export class NodeManager {
     }
 
     /**
-     * @param {Node} startNode 
-     * @param {Node} endNode
+     * @param {Joiner} startNode 
+     * @param {Joiner} endNode
      * @param {THREE.Scene} scene
      * @returns 
      */
@@ -101,28 +119,45 @@ export class NodeManager {
     // -----
     /**
      * Updates the position, scale, and rotation of all beams in the structure.
-     * This function is asynchronous to allow for parallel processing.
      */
-    async updateAllBeams() {
+    updateAllBeams() {
         // Update all beams in the structure in async
-        await Promise.all(this.beams.map(beam => beam.update()));
+        this.beams.map(beam => beam.update());
     }
 
     /**
      * Updates the position, scale, and rotation of all nodes in the structure.
-     * This function is asynchronous to allow for parallel processing.
      * @param {number} worldSize 
      */
-    async updateAllNodes(worldSize) {
+    updateAllNodes(worldSize) {
         // Update all nodes in the structure in async
-        await Promise.all(this.nodes.map(node => node.update(worldSize)));
+        this.nodes.map(node => node.update(worldSize));
+        this.updateInfoPanel();
+    }
 
-        // Check all nodes
-        if (this.nodes.length > 0 && this.nodes.filter(x => x.isSelected).length === 2) {
-            document.getElementById('addMember').disabled = false;
+    /**
+     * Updates the info panel with the selected node's information.
+     */
+    updateInfoPanel() {
+        // Buttons
+        Utilities.ui.deleteButton.disabled = !this.isOnly1NodeSelected;
+        Utilities.ui.linkButton.disabled = !this.isOnly2NodesSelected;
+
+        // Info panel
+        if (this.isOnly1NodeSelected) {
+            Utilities.ui.forcePanel.style.display = "block";
+
+            // Set force inputs to current values
+            Utilities.ui.forceXInput.value = this.selectedNode(1).force.vector.x;
+            Utilities.ui.forceYInput.value = this.selectedNode(1).force.vector.y;
+            Utilities.ui.forceZInput.value = this.selectedNode(1).force.vector.z;
         }
         else {
-            document.getElementById('addMember').disabled = true;
+            Utilities.ui.forcePanel.style.display = "none";
+            // Reset force inputs to zero
+            Utilities.ui.forceXInput.value = 0;
+            Utilities.ui.forceYInput.value = 0;
+            Utilities.ui.forceZInput.value = 0;
         }
     }
 

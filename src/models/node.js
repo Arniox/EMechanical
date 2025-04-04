@@ -1,9 +1,10 @@
 import * as THREE from "three";
 /** 
  * @import { TransformControls } from '/three/addons/controls/TransformControls.js'
+ * @import { NodeManager } from './nodeManager.js'
  */
 
-export class Node {
+export class Joiner {
     /**
      * @param {THREE.Vector3} position
      */
@@ -12,6 +13,7 @@ export class Node {
         this.arrowScaling = 0.1;
         this.isSelected = false;
         this.selectedIndex = 0;
+        this.radius = 0.015; // Default radius for the node
 
         // Engineering properties
         this.mass = 1;
@@ -30,7 +32,7 @@ export class Node {
         this.isFixed = false;
 
         // Setup Geometry and Material
-        this.geometry = new THREE.SphereGeometry(0.015, 16, 16);
+        this.geometry = new THREE.SphereGeometry(this.radius, 16, 16);
         this.material = new THREE.MeshStandardMaterial({
             color: 0xa0f0f0, // default blue
             roughness: 0.25,
@@ -123,8 +125,9 @@ export class Node {
 
     /**
      * @param {TransformControls} transformControls 
+     * @param {boolean} allowMultiple
      */
-    select(transformControls) {
+    select(transformControls, allowMultiple = false) {
         this.isSelected = true;
         this.selectedIndex += 1;
 
@@ -135,15 +138,24 @@ export class Node {
             return;
         }
 
-        // Detach if another node is selected
-        if (this.selectedIndex > 1) {
+        // Unselect if selecting a new node
+        // This is to prevent single selections beyond 1
+        if (this.selectedIndex > 1 && !allowMultiple) {
+            this.unselect(transformControls);
+            return;
+        }
+
+        // Only detach controls if more than 1 node is selected
+        // This is to allow multiple selections if allowMultiple is true
+        if (this.selectedIndex > 1 || allowMultiple) {
             transformControls.detach();
             return;
         }
 
         // Attach the transform controls to the node
-        if (this.selectedIndex === 1) {
+        if (this.selectedIndex === 1 && !allowMultiple) {
             transformControls.attach(this.mesh);
+            return;
         }
     }
 
@@ -160,13 +172,11 @@ export class Node {
      * Update the node's position, scale, and rotation based on its properties.
      * @param {number} worldSize
      */
-    async update(worldSize) {
-        await Promise.all([
-            this.createArrow("force", 0xffa500, worldSize),
-            this.createArrow("acceleration", 0x90EE90, worldSize),
-            this.createArrow("velocity", 0x72bcd4, worldSize),
-            this.createOutline(),
-        ]);
+    update(worldSize) {
+        this.createArrow("force", 0xffa500, worldSize);
+        this.createArrow("acceleration", 0x90EE90, worldSize);
+        this.createArrow("velocity", 0x72bcd4, worldSize);
+        this.createOutline();
     }
 
     /**
@@ -175,7 +185,7 @@ export class Node {
      * @param {number} worldSize
      * @returns 
      */
-    async createArrow(type, color, worldSize) {
+    createArrow(type, color, worldSize) {
         // Remove existing arrow if the vector is zero
         if (this[type].vector.length() === 0 && this[type].arrow) {
             this[type].arrow.geometry.dispose();
@@ -220,7 +230,7 @@ export class Node {
      * Creates an outline around the node for selection.
      * This is a wireframe mesh that is slightly larger than the original node.
      */
-    async createOutline() {
+    createOutline() {
         // If not selected, and outline exists, remove it
         if (!this.isSelected && this.mesh.userData.selectionOutline) {
             this.mesh.remove(this.mesh.userData.selectionOutline);

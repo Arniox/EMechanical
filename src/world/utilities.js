@@ -1,33 +1,64 @@
 export default class Utilities {
-    constructor() {
-        const worldSizeInput = document.getElementById("worldSizeInput");
-        const unitSelect = document.getElementById("unitSelect");
+    static ui = {
+        // Panels
+        infoPanel: document.getElementById('selectedObjectInfo'),
+        forcePanel: document.getElementById('forceInput'),
+        // Inputs
+        worldSizeInput: document.getElementById("worldSizeInput"),
+        unitSelect: document.getElementById("unitSelect"),
+        forceXInput: document.getElementById('forceX'),
+        forceYInput: document.getElementById('forceY'),
+        forceZInput: document.getElementById('forceZ'),
+        showGridCheckBox: document.getElementById("showGrid"),
+        // Buttons
+        addNodeButton: document.getElementById('addNode'),
+        applyForceButton: document.getElementById('applyForce'),
+        deleteButton: document.getElementById('deleteSelected'),
+        linkButton: document.getElementById('addMember'),
+        resetViewButton: document.getElementById("resetView"),
+        // Outputs
+        worldSizeOutput: document.getElementById("worldSizeValue"),
+    };
 
-        this.worldSize = worldSizeInput ? parseFloat(worldSizeInput.value) : 1;
-        this.unit = unitSelect ? unitSelect.value : "m";
-        this.unitConversion = {
-            "pm": 1e-12,
-            "nm": 1e-9,
-            "μm": 1e-6,
-            "mm": 1e-3,
-            "cm": 1e-2,
-            "m": 1,
-            "km": 1e3,
-            "au": 149597870700,
-            "ly": 9.4607e15,
-            "pc": 3.08567758149137e16,
-            "in": 0.0254,
-            "ft": 0.3048,
-            "yd": 0.9144,
-            "mi": 1609.344,
-            "ftm": 1.8288,
-            "nmi": 1852,
-        };
+    // Static Fields - Shared across all instances
+    /**
+     * @returns {number} The raw world size in units
+     */
+    static get worldSize() {
+        return this.ui.worldSizeInput ? parseFloat(this.ui.worldSizeInput.value) : 1;
     }
-
+    /**
+     * @returns {string} The world size unit
+     */
+    static get unit() {
+        return this.ui.unitSelect ? this.ui.unitSelect.value : "m";
+    }
+    /**
+     * @returns {number} The world size scaled to the world unit
+     */
     static get worldScale() {
         return this.convertUnit(this.worldSize);
     }
+
+    static unitConversion = {
+        "pm": 1e-12,
+        "nm": 1e-9,
+        "μm": 1e-6,
+        "mm": 1e-3,
+        "cm": 1e-2,
+        "m": 1,
+        "km": 1e3,
+        "au": 149597870700,
+        "ly": 9.4607e15,
+        "pc": 3.08567758149137e16,
+        "in": 0.0254,
+        "ft": 0.3048,
+        "yd": 0.9144,
+        "mi": 1609.344,
+        "ftm": 1.8288,
+        "nmi": 1852,
+    };
+    static keyState = {}; // For key state tracking
 
     /**
      * Converts an input value to the currently selected unit
@@ -46,11 +77,8 @@ export default class Utilities {
      * This function updates the world size and unit based on the input fields.
      */
     static updateInputs() {
-        const worldSizeInput = document.getElementById("worldSizeInput");
-        const unitSelect = document.getElementById("unitSelect");
-
-        this.worldSize = worldSizeInput ? parseFloat(worldSizeInput.value) : 1;
-        this.unit = unitSelect ? unitSelect.value : "m";
+        this.worldSize = this.ui.worldSizeInput ? parseFloat(this.ui.worldSizeInput.value) : 1;
+        this.unit = this.ui.unitSelect ? this.ui.unitSelect.value : "m";
     }
 
     /**

@@ -1,15 +1,18 @@
 import * as THREE from "three";
-import { Node } from "./node.js";
+import { Joiner } from "./node.js";
 
 export class Beam {
     /**
-     * @param {Node} startNode 
-     * @param {Node} endNode 
+     * @param {Joiner} startNode 
+     * @param {Joiner} endNode 
      */
     constructor(startNode, endNode) {
         this.startNode = startNode;
         this.endNode = endNode;
         this.length = 0;
+        this.defaultRadius = 0.0025; // Default radius for the beam
+        this.startRadius = startNode.radius > 0 ? startNode.radius / 3 : this.defaultRadius;
+        this.endRadius = endNode.radius > 0 ? endNode.radius / 3 : this.defaultRadius;
 
         // Engineering properties
         this.tensileStrength = 0;
@@ -22,9 +25,9 @@ export class Beam {
         this.selectedIndex = 0;
 
         // Setup Geometry and Material
-        this.geometry = new THREE.CylinderGeometry(0.0025, 0.0025, 1, 8);
+        this.geometry = new THREE.CylinderGeometry(this.startRadius, this.endRadius, 1, 8);
         this.material = new THREE.MeshStandardMaterial({
-            color: color,
+            color: 0xffffff,
             roughness: 0.7,
             metalness: 0.3
         });
@@ -56,7 +59,7 @@ export class Beam {
     /**
      * Update the beam's position, scale, and rotation based on its nodes.
      */
-    async update() {
+    update() {
         this.length = this.startNode.position.distanceTo(this.endNode.position);
         // Since the geometry is unit height, scale Y to match the distance.
         this.mesh.scale.set(1, this.length, 1);

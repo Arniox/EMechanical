@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { OrbitControls } from "/three/addons/controls/OrbitControls.js";
 import { TransformControls } from "/three/addons/controls/TransformControls.js";
-import { NodeManager } from "../models/nodeManager";
+import { NodeManager } from "../models/nodeManager.js";
 import { container } from "../main.js";
+import Utilities from "./utilities.js";
 
 export class World {
     constructor() {
@@ -11,7 +12,6 @@ export class World {
         this.scene.background = new THREE.Color(0x333333); // Dark Gray
 
         // Controls
-        this.worldSize = 1.0;
         this.controls = null;
         this.transformControls = {
             controls: null,
@@ -36,20 +36,27 @@ export class World {
 
         // Controls
         this.addControls();
-
-        // Html Initialization
-        this.initializeHTML();
+        this.addTransformControls();
     }
 
-    get isIntersectingTransformControls() {
+    /**
+     * @returns {boolean}
+     */
+    get isGizmoIntersecting() {
         return this.transformControls.isIntersecting;
     }
-    set isIntersectingTransformControls(value) {
+    /**
+     * @param {boolean} value
+     */
+    set isGizmoIntersecting(value) {
         this.transformControls.isIntersecting = value;
     }
 
-    setWorldSize(size) {
-        this.worldSize = size;
+    /**
+     * @returns {number}
+     */
+    get worldSize() {
+        return Utilities.worldSize;
     }
 
     //#region Initialization
@@ -118,11 +125,6 @@ export class World {
     addWorldGrid() {
         this.gridHelper = new THREE.GridHelper(1, 10, 0x888888, 0x444444);
         this.scene.add(this.gridHelper);
-
-        // Add event listener to toggle grid visibility
-        document.getElementById("showGrid").addEventListener("change", (e) => {
-            this.gridHelper.visible = e.target.checked;
-        });
     }
 
     addCamera() {
@@ -143,9 +145,6 @@ export class World {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(this.renderer.domElement);
-
-        // Add event listener for clicking
-        this.renderer.domElement.addEventListener("click", this.onMouseClick);
     }
 
     addControls() {
@@ -161,9 +160,6 @@ export class World {
             MIDDLE: THREE.MOUSE.PAN,
             RIGHT: THREE.MOUSE.ROTATE,
         };
-
-        // Add event listener to reset view
-        document.getElementById("resetView").addEventListener("click", this.resetView);
     }
 
     addTransformControls() {
@@ -193,26 +189,6 @@ export class World {
         const geometry = new THREE.BufferGeometry().setFromPoints([v1, v2]);
         return new THREE.Line(geometry, material);
     }
-
-    resetView() {
-        this.camera.position.set(1.2, 1.2, 1.8);
-        this.camera.lookAt(0, 0, 0);
-        this.controls.target.set(0, 0, 0);
-        this.controls.update();
-    }
-
-    onMouseClick() {
-
-    }
-    //#endregion
-
-    //#HTML Initialization
-    initializeHTML() {
-        document.querySelectorAll('.forceInput').forEach(input => {
-            input.setAttribute('max', this.worldSize);
-            input.setAttribute('min', -this.worldSize);
-        });
-    }
     //#endregion
 
     render() {
@@ -222,11 +198,11 @@ export class World {
     /**
      * Updates the world, including the camera and controls.
      */
-    async updateAll() {
+    updateAll() {
         this.controls.update();
         this.transformControls.controls.update();
-        await this.nodeManager.updateAllNodes();
-        await this.nodeManager.updateAllBeams();
+        this.nodeManager.updateAllNodes();
+        this.nodeManager.updateAllBeams();
     }
 
     delete() {
