@@ -6,7 +6,6 @@ export default class Utilities {
         toolbar: document.getElementById('toolbar'),
         // Range Inputs
         worldSizeInput: document.getElementById("worldSizeInput"),
-        simulationTimeInput: document.getElementById("simulationTimeInput"),
         // Inputs
         unitSelect: document.getElementById("unitSelect"),
         forceXInput: document.getElementById('forceX'),
@@ -20,7 +19,6 @@ export default class Utilities {
         resetViewButton: document.getElementById("resetView"),
         // Outputs
         worldSizeOutput: document.getElementById("worldSizeValue"),
-        simulationTimeOutput: document.getElementById("simulationTimeValue"),
     };
 
     // Input fields
@@ -35,12 +33,6 @@ export default class Utilities {
      */
     static get unit() {
         return this.ui.unitSelect ? this.ui.unitSelect.value : "m";
-    }
-    /**
-     * @returns {number} The simulation time in seconds
-     */
-    static get simulationTime() {
-        return this.ui.simulationTimeInput ? parseFloat(this.ui.simulationTimeInput.value) : 1;
     }
 
     // Static Fields - Shared across all instances
@@ -69,6 +61,7 @@ export default class Utilities {
         "nmi": 1852,
     };
     static keyState = {}; // For key state tracking
+    static simulationTime = 1; // 1 Second
 
     /**
      * Converts an input value to the currently selected unit

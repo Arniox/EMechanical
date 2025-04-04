@@ -57,8 +57,9 @@ export class Beam {
 
     /**
      * Update the beam's position, scale, and rotation based on its nodes.
+     * @param {number} deltaTime - The time since the last update (not used here, but can be useful for animations).
      */
-    update() {
+    update(deltaTime) {
         this.length = this.parents[0].position.distanceTo(this.parents[1].position);
         // Since the geometry is unit height, scale Y to match the distance.
         this.mesh.scale.set(1, this.length, 1);

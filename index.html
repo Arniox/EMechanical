@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <!-- World Scale -->
+    <!-- World -->
     <div class="tool-section">
       <div class="form-group">
         <label for="worldSizeInput">World Size:</label>
@@ -52,14 +52,6 @@
       </div>
     </div>
 
-    <div class="tool-section">
-      <div class="form-group">
-        <label for="simulationTimeInput">Simulation Time:</label>
-        <input id="simulationTimeInput" max="10" min="1" step="1" type="range" value="5" />
-        <span id="simulationTimeValue">5s</span>
-      </div>
-    </div>
-
     <!-- Object Control -->
     <div class="tool-section">
       <h3>Structure</h3>
@@ -75,7 +67,6 @@
         <input class="forceInput" id="forceX" step="0.1" type="number" value="0" />
         <input class="forceInput" id="forceY" step="0.1" type="number" value="0" />
         <input class="forceInput" id="forceZ" step="0.1" type="number" value="0" />
-        <button id="applyForce">Apply Force</button>
       </div>
     </div>
 
@@ -95,6 +86,8 @@
       <button disabled id="deleteSelected">Delete</button>
     </div>
   </div>
+  <!-- Toolbar Overlay -->
+  <div class="toolbar-overlay"></div>
   <script type="importmap">
       {
         "imports": {

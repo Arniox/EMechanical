@@ -118,18 +118,20 @@ export class NodeManager {
 
     /**
      * Updates the position, scale, and rotation of all beams in the structure.
+     * @param {number} deltaTime - The time elapsed since the last update.
      */
-    updateAllBeams() {
+    updateAllBeams(deltaTime) {
         // Update all beams in the structure in async
-        this.beams.map(beam => beam.update());
+        this.beams.map(beam => beam.update(deltaTime));
     }
 
     /**
      * Updates the position, scale, and rotation of all nodes in the structure.
+     * @param {number} deltaTime - The time elapsed since the last update.
      */
-    updateAllNodes() {
+    updateAllNodes(deltaTime) {
         // Update all nodes in the structure in async
-        this.nodes.map(node => node.update());
+        this.nodes.map(node => node.update(deltaTime));
     }
 
     /**

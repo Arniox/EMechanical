@@ -52,7 +52,6 @@ export class Page {
 
         // Range Inputs
         Utilities.ui.worldSizeInput.addEventListener('input', this.worldSizeInputChangeEventHandler.bind(this));
-        Utilities.ui.simulationTimeInput.addEventListener('input', this.simulationTimeInputChangeEventHandler.bind(this));
         // Inputs
         Utilities.ui.unitSelect.addEventListener('change', this.unitSelectChangeEventHandler.bind(this));
         Utilities.ui.showGridCheckBox.addEventListener('change', this.showGridCheckboxChangeEventHandler.bind(this));
@@ -85,6 +84,18 @@ export class Page {
         this.world.camera.lookAt(0, 0, 0);
         this.world.controls.target.set(0, 0, 0);
         this.world.controls.update();
+    }
+
+    /**
+     * Checks if the toolbar is scrollable.
+     * This is used to add or remove the scrollable class from the toolbar.
+     */
+    checkToolbarScroll() {
+        if (Utilities.ui.toolbar.scrollHeight > Utilities.ui.toolbar.clientHeight) {
+            Utilities.ui.toolbar.classList.add("scrollable");
+        } else {
+            Utilities.ui.toolbar.classList.remove("scrollable");
+        }
     }
     //#endregion
 
@@ -173,13 +184,7 @@ export class Page {
 
         // Handle Node Info Panel
         this.world.nodeManager.updateInfoPanel();
-        // Handle tool bar scrolling
-        if (Utilities.ui.toolbar.scrollHeight > Utilities.ui.toolbar.clientHeight) {
-            Utilities.ui.toolbar.classList.add("scrollable");
-        }
-        else {
-            Utilities.ui.toolbar.classList.remove("scrollable");
-        }
+        this.checkToolbarScroll();
     }
 
     /**
@@ -274,14 +279,6 @@ export class Page {
     }
 
     /**
-     * Handles the input change event for the simulation time input field.
-     * This updates the simulation time output based on the input value.
-     */
-    simulationTimeInputChangeEventHandler() {
-        Utilities.ui.simulationTimeOutput.innerHTML = `${Utilities.simulationTime}s`;
-    }
-
-    /**
      * Handles the click event for the add node button.
      * This creates a new node at a random position in the world.
      * The position is constrained to the world size.
@@ -301,12 +298,16 @@ export class Page {
      * As the user types, it updates the force on the selected node.
      */
     forceInputEventHandler() {
+        if (Utilities.ui.forceXInput.value === "" || Utilities.ui.forceYInput.value === "" || Utilities.ui.forceZInput.value === "") {
+            return; // skip if any of the inputs are empty
+        }
+
         let xValue = parseFloat(Utilities.ui.forceXInput.value) || 0;
         let yValue = parseFloat(Utilities.ui.forceYInput.value) || 0;
         let zValue = parseFloat(Utilities.ui.forceZInput.value) || 0;
         // Set force
         if (this.world.nodeManager.isOnly1NodeSelected) {
-            this.world.nodeManager.selectedNode(1).setMotion('force', new THREE.Vector3(xValue, yValue, zValue));
+            this.world.nodeManager.selectedNode(1).setForce(new THREE.Vector3(xValue, yValue, zValue));
         }
     }
 
@@ -340,7 +341,5 @@ export class Page {
             this.setSelectInfo("Please Ctrl-click to select exactly 2 nodes to connect.");
         }
     }
-
-
     //#endregion
 }

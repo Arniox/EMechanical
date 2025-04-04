@@ -11,7 +11,6 @@ export class Joiner {
      */
     constructor(position) {
         this.position = position;
-        this.arrowScaling = 0.1;
         this.isSelected = false;
         this.selectedIndex = 0;
         this.radius = 0.015; // Default radius for the node
@@ -49,7 +48,6 @@ export class Joiner {
      */
     add(scene) {
         scene.add(this.mesh);
-        this.update();
     }
 
     /**
@@ -77,39 +75,53 @@ export class Joiner {
     }
 
     /**
-     * Sets the motion vector of the node of a specific type, and auto-updates the other motion vectors
-     * using a smoothing factor to simulate inertia (momentum). This assumes that:
+     * Sets the force vector of the node and auto-updates the other motion vectors
      *   - this.mass is the mass (default 1)
      *   - Utilities.simulationTime is the time step (default 1 second)
      *   - this.force.vector, this.acceleration.vector, and this.velocity.vector are THREE.Vector3
      * 
-     * @param {string} type - "force", "acceleration", or "velocity"
      * @param {THREE.Vector3} motionVector 
      */
-    setMotion(type, motionVector) {
-        if (!this[type]) {
-            console.warn(`Invalid motion type: ${type}`);
+    setForce(motionVector) {
+        // Update the specified motion vector instantly
+        this.force.vector.copy(motionVector);
+
+        // Skip if the vector is zero
+        if (this.force.vector.length() === 0) {
             return;
         }
 
-        // Update the specified motion vector instantly
-        this[type].vector.copy(motionVector);
+        // Auto compute acceleration and velocity from force: a = F / m, v = a * dt.
+        this.acceleration.vector.add(this.force.vector.clone().divideScalar(this.mass));
+        this.velocity.vector.add(this.acceleration.vector.clone().multiplyScalar(Utilities.simulationTime));
+    }
 
-        // Auto calculate the other motion vectors with application of Newton's laws
-        if (type === "force") {
-            // Auto compute acceleration and velocity from force: a = F / m, v = a * dt.
-            this.acceleration.vector.add(this.force.vector.clone().divideScalar(this.mass));
-            this.velocity.vector.add(this.acceleration.vector.clone().multiplyScalar(Utilities.simulationTime));
-        }
-        else if (type === "acceleration") {
-            // Auto compute force and velocity from acceleration: F = m * a, v = a * dt.
-            this.force.vector.add(this.acceleration.vector.clone().multiplyScalar(this.mass));
-            this.velocity.vector.add(this.acceleration.vector.clone().multiplyScalar(Utilities.simulationTime));
-        }
-        else if (type === "velocity") {
-            // Auto compute acceleration first then force from velocity: a = v / dt, F = m * a.
-            this.acceleration.vector.add(this.velocity.vector.clone().divideScalar(Utilities.simulationTime));
-            this.force.vector.add(this.acceleration.vector.clone().multiplyScalar(this.mass));
+    /**
+     * Dampens the motion of the node if there is no force applied.
+     * This is done by applying a friction-like effect to the acceleration and velocity vectors.
+     * 
+     * @param {number} deltaTime - The time since the last update.
+     */
+    dampenMotion(deltaTime) {
+        // If there is no force, gradually damp acceleration and velocity.
+        if (this.force.vector.length() === 0) {
+            // k is a friction constant (per second).
+            const k = 0.5;
+            // Compute friction acceleration: opposite to velocity.
+            const frictionAcc = this.velocity.vector.clone().multiplyScalar(-k);
+
+            // Update velocity using friction acceleration. This is essentially: v_new = v_old + (-k * v_old) * deltaTime
+            this.velocity.vector.add(frictionAcc.multiplyScalar(deltaTime));
+
+            // Update the node's stored acceleration to reflect friction.
+            this.acceleration.vector.copy(frictionAcc);
+
+            // If the velocity is very small, clamp it to 0.
+            if (this.velocity.vector.length() < 0.001) {
+                this.velocity.vector.set(0, 0, 0);
+                // Let acceleration decay slowly in the next frame with a small lerp towards 0.
+                this.acceleration.vector.lerp(new THREE.Vector3(0, 0, 0), deltaTime);
+            }
         }
     }
 
@@ -176,62 +188,89 @@ export class Joiner {
 
     /**
      * Update the node's position, scale, and rotation based on its properties.
+     * @param {number} deltaTime - The time since the last update (not used here, but can be useful for animations).
      */
-    update() {
+    update(deltaTime) {
         // Update position
         this.position.copy(this.mesh.position);
 
+        // Update motion
+        this.dampenMotion(deltaTime);
+
         // Update Affects
         this.createArrow("force", 0xffa500, Utilities.worldSize);
-        this.createArrow("acceleration", 0x90EE90, Utilities.worldSize);
+        this.createArrow("acceleration", 0x90EE90, Utilities.worldSize * 0.25);
         this.createArrow("velocity", 0x72bcd4, Utilities.worldSize);
         this.createOutline();
     }
 
     /**
-     * @param {string} type 
-     * @param {THREE.ColorRepresentation} color 
-     * @param {number} worldSize
-     * @returns 
+     * Creates or updates an arrow helper for a given motion vector.
+     * If the vector is too small, the arrow is either not rendered
+     * or just barely pokes out of the node's surface.
+     *
+     * @param {string} type - The motion type (e.g., "force").
+     * @param {THREE.ColorRepresentation} color - The arrow color.
+     * @param {number} worldSize - Used for scaling the arrow length.
      */
     createArrow(type, color, worldSize) {
-        // Remove existing arrow if the vector is zero
-        if (this[type].vector.length() === 0 && this[type].arrow) {
-            this[type].arrow.geometry.dispose();
-            this[type].arrow.material.dispose();
-            this[type].arrow.dispose();
-            this[type].arrow = null;
-            this.mesh.parent.remove(this[type].arrow);
-        }
+        // The raw vector length in "world" units (e.g., Newtons if force).
+        const forceMag = this[type].vector.length();
 
-        // Skip if the vector is zero
-        if (this[type].vector.length() === 0) {
+        // Threshold which we won't bother drawing the arrow. If it's smaller than half the node radius, skip it.
+        const minDrawThreshold = this.radius * 0.5;
+        if (forceMag < minDrawThreshold) {
+            // Clean up if an arrow currently exists
+            if (this[type].arrow) {
+                this.mesh.parent.remove(this[type].arrow);
+                this[type].arrow.dispose();
+                this[type].arrow = null;
+            }
             return;
         }
 
-        // Scale the axis to the world size
-        const ωx = (this[type].vector.x / worldSize) + 0.75;
-        const ωy = (this[type].vector.y / worldSize) + 0.75;
-        const ωz = (this[type].vector.z / worldSize) + 0.75;
-        const arrowVector = new THREE.Vector3(ωx, ωy, ωz);
+        // Convert the vector to a scaled version by dividing by worldSize so that large or small forces remain visible in the scene.
+        const arrowVector = this[type].vector.clone().divideScalar(worldSize);
+        const arrowLength = arrowVector.length(); // Visual length of the arrow
 
-        // If the arrow exists and the vector is not zero, update its position
+        // We'll offset the arrow's origin so it starts at the node's surface.
+        // 1) direction = arrowVector normalized
+        // 2) offset = direction * radius
+        const direction = arrowVector.clone().normalize();
+        const offset = direction.clone().multiplyScalar(this.radius);
+        const arrowStart = this.position.clone().add(offset);
+
+        // The portion of the arrow that extends beyond the node’s radius:
+        let visibleLength = arrowLength - this.radius;
+        if (visibleLength < 0) {
+            visibleLength = 0;
+        }
+
+        // Cap the arrow head size so it doesn’t get huge if arrow is large, or exceed some fraction of the node’s diameter. Can't exceed node radius
+        const headLen = this.radius * 1.5;    // arrow head length
+        const headWidth = 0.015;              // arrow head width
+
+        // If the arrow already exists, just update it.
         if (this[type].arrow) {
-            this[type].arrow.position.copy(this.position);
-            this[type].arrow.setDirection(arrowVector.clone().normalize());
+            this[type].arrow.position.copy(arrowStart);
+            this[type].arrow.setDirection(direction);
+            this[type].arrow.setLength(visibleLength, headLen, headWidth);
             return;
         }
 
-        // Create the arrow helper
+        // Otherwise, create a new ArrowHelper
         const arrow = new THREE.ArrowHelper(
-            arrowVector.clone().normalize(),
-            this.position,
-            arrowVector.length() * this.arrowScaling,
-            color,
-            0.025,
-            0.01
+            direction,         // direction
+            arrowStart,        // origin
+            visibleLength,     // length
+            color,             // color
+            headLen,           // head length
+            headWidth          // head width
         );
-        this.mesh.parent.add(arrow);
+        // Add to the node’s parent, if any.
+        if (this.mesh.parent) {
+            this.mesh.parent.add(arrow);
+        }
         this[type].arrow = arrow;
     }
 
