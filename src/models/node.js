@@ -97,30 +97,31 @@ export class Joiner {
     }
 
     /**
-     * Dampens the motion of the node if there is no force applied.
-     * This is done by applying a friction-like effect to the acceleration and velocity vectors.
-     * 
-     * @param {number} deltaTime - The time since the last update.
-     */
+ * Dampens the motion of the node if there is no force applied.
+ * Applies friction such that velocity decays and the acceleration arrow decays more slowly.
+ * @param {number} deltaTime - The time since the last update.
+ */
     dampenMotion(deltaTime) {
         // If there is no force, gradually damp acceleration and velocity.
         if (this.force.vector.length() === 0) {
-            // k is a friction constant (per second).
-            const k = 0.5;
-            // Compute friction acceleration: opposite to velocity.
+            // k is a friction constant (per second) for the physics update.
+            const k = 1;
+            // Compute friction acceleration: opposite to the velocity.
             const frictionAcc = this.velocity.vector.clone().multiplyScalar(-k);
 
-            // Update velocity using friction acceleration. This is essentially: v_new = v_old + (-k * v_old) * deltaTime
+            // Update velocity: v_new = v_old + a_f * deltaTime.
             this.velocity.vector.add(frictionAcc.multiplyScalar(deltaTime));
 
-            // Update the node's stored acceleration to reflect friction.
-            this.acceleration.vector.copy(frictionAcc);
+            // Instead of instantly setting acceleration to frictionAcc,
+            // lerp the displayed acceleration more slowly so the arrow fades out gradually.
+            const arrowDampening = k / 2; // Adjust this value for slower decay of the arrow.
+            this.acceleration.vector.lerp(frictionAcc, arrowDampening * deltaTime);
 
             // If the velocity is very small, clamp it to 0.
             if (this.velocity.vector.length() < 0.001) {
                 this.velocity.vector.set(0, 0, 0);
-                // Let acceleration decay slowly in the next frame with a small lerp towards 0.
-                this.acceleration.vector.lerp(new THREE.Vector3(0, 0, 0), deltaTime);
+                // Further slowly decay acceleration towards zero.
+                this.acceleration.vector.lerp(new THREE.Vector3(0, 0, 0), deltaTime * 0.1);
             }
         }
     }
@@ -199,7 +200,7 @@ export class Joiner {
 
         // Update Affects
         this.createArrow("force", 0xffa500, Utilities.worldSize);
-        this.createArrow("acceleration", 0x90EE90, Utilities.worldSize * 0.25);
+        this.createArrow("acceleration", 0x90EE90, Utilities.worldSize);
         this.createArrow("velocity", 0x72bcd4, Utilities.worldSize);
         this.createOutline();
     }
