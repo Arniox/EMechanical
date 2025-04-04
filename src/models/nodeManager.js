@@ -116,7 +116,6 @@ export class NodeManager {
         }
     }
 
-    // -----
     /**
      * Updates the position, scale, and rotation of all beams in the structure.
      */
@@ -127,12 +126,10 @@ export class NodeManager {
 
     /**
      * Updates the position, scale, and rotation of all nodes in the structure.
-     * @param {number} worldSize 
      */
-    updateAllNodes(worldSize) {
+    updateAllNodes() {
         // Update all nodes in the structure in async
-        this.nodes.map(node => node.update(worldSize));
-        this.updateInfoPanel();
+        this.nodes.map(node => node.update());
     }
 
     /**

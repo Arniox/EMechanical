@@ -19,8 +19,9 @@ body {
     /* Use flexbox for layout */
 }
 
+/* Toolbar styling */
 #toolbar {
-    width: 220px;
+    width: 320px;
     /* Slightly wider toolbar */
     height: 100vh;
     /* Full viewport height */
@@ -32,8 +33,44 @@ body {
     /* Prevent toolbar from shrinking */
     overflow-y: auto;
     /* Allow scrolling if content exceeds height */
+
+    /* Hide scrollbar in Firefox */
+    scrollbar-width: none;
+    /* Hide scrollbar in IE 10+ */
+    -ms-overflow-style: none;
+    position: relative;
+    /* Required for pseudo-elements */
 }
 
+/* Hide scrollbar in Chrome, Safari, Opera */
+#toolbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Add a fade at the bottom to indicate scrollability */
+#toolbar.scrollable::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7));
+    pointer-events: none;
+}
+
+#toolbar.scrollable::before {
+    content: "▼";
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 20px;
+    pointer-events: none;
+}
+
+/* Remaining styles */
 #toolbar h2 {
     margin-bottom: 15px;
     text-align: center;

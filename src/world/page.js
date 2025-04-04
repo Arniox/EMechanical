@@ -27,10 +27,12 @@ export class Page {
      */
     buildHtml() {
         // Force Input Setup
-        document.querySelectorAll('.forceInput').forEach(input => {
-            input.setAttribute('max', this.worldSize);
-            input.setAttribute('min', -this.worldSize);
-        });
+        Utilities.ui.forceXInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceYInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceZInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceXInput.setAttribute('min', -Utilities.worldSize);
+        Utilities.ui.forceYInput.setAttribute('min', -Utilities.worldSize);
+        Utilities.ui.forceZInput.setAttribute('min', -Utilities.worldSize);
     }
 
     /**
@@ -48,13 +50,17 @@ export class Page {
         // Canvas Event Listeners
         this.world.renderer.domElement.addEventListener("click", this.mouseClickEventHandler.bind(this));
 
-        // Inputs
+        // Range Inputs
         Utilities.ui.worldSizeInput.addEventListener('input', this.worldSizeInputChangeEventHandler.bind(this));
+        Utilities.ui.simulationTimeInput.addEventListener('input', this.simulationTimeInputChangeEventHandler.bind(this));
+        // Inputs
         Utilities.ui.unitSelect.addEventListener('change', this.unitSelectChangeEventHandler.bind(this));
         Utilities.ui.showGridCheckBox.addEventListener('change', this.showGridCheckboxChangeEventHandler.bind(this));
+        Utilities.ui.forceXInput.addEventListener('input', this.forceInputEventHandler.bind(this));
+        Utilities.ui.forceYInput.addEventListener('input', this.forceInputEventHandler.bind(this));
+        Utilities.ui.forceZInput.addEventListener('input', this.forceInputEventHandler.bind(this));
         // Buttons
         Utilities.ui.addNodeButton.addEventListener('click', this.addNodeButtonClickEventHandler.bind(this));
-        Utilities.ui.applyForceButton.addEventListener('click', this.applyForceButtonClickEventHandler.bind(this));
         Utilities.ui.deleteButton.addEventListener('click', this.deleteSelectedButtonClickEventHandler.bind(this));
         Utilities.ui.linkButton.addEventListener('click', this.addBeamButtonClickEventHandler.bind(this));
         Utilities.ui.resetViewButton.addEventListener('click', this.resetCameraView.bind(this));
@@ -164,6 +170,16 @@ export class Page {
             // Set message
             this.setSelectInfo("No object selected");
         }
+
+        // Handle Node Info Panel
+        this.world.nodeManager.updateInfoPanel();
+        // Handle tool bar scrolling
+        if (Utilities.ui.toolbar.scrollHeight > Utilities.ui.toolbar.clientHeight) {
+            Utilities.ui.toolbar.classList.add("scrollable");
+        }
+        else {
+            Utilities.ui.toolbar.classList.remove("scrollable");
+        }
     }
 
     /**
@@ -229,6 +245,12 @@ export class Page {
 
         // Set
         Utilities.ui.worldSizeOutput.innerHTML = `${Utilities.worldSize} ${Utilities.unit}${worldScaleOutput}`;
+        Utilities.ui.forceXInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceYInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceZInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceXInput.setAttribute('min', -Utilities.worldSize);
+        Utilities.ui.forceYInput.setAttribute('min', -Utilities.worldSize);
+        Utilities.ui.forceZInput.setAttribute('min', -Utilities.worldSize);
     }
 
     /**
@@ -243,6 +265,20 @@ export class Page {
 
         // Set
         Utilities.ui.worldSizeOutput.innerHTML = `${Utilities.worldSize} ${Utilities.unit}${worldScaleOutput}`;
+        Utilities.ui.forceXInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceYInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceZInput.setAttribute('max', Utilities.worldSize);
+        Utilities.ui.forceXInput.setAttribute('min', -Utilities.worldSize);
+        Utilities.ui.forceYInput.setAttribute('min', -Utilities.worldSize);
+        Utilities.ui.forceZInput.setAttribute('min', -Utilities.worldSize);
+    }
+
+    /**
+     * Handles the input change event for the simulation time input field.
+     * This updates the simulation time output based on the input value.
+     */
+    simulationTimeInputChangeEventHandler() {
+        Utilities.ui.simulationTimeOutput.innerHTML = `${Utilities.simulationTime}s`;
     }
 
     /**
@@ -261,22 +297,13 @@ export class Page {
     }
 
     /**
-     * Handles the click event for the apply force button.
-     * This constrains the force input values to the world size.
-     * Then sets the force on the selected node.
+     * Handles the input event for all force inputs.
+     * As the user types, it updates the force on the selected node.
      */
-    applyForceButtonClickEventHandler() {
+    forceInputEventHandler() {
         let xValue = parseFloat(Utilities.ui.forceXInput.value) || 0;
         let yValue = parseFloat(Utilities.ui.forceYInput.value) || 0;
         let zValue = parseFloat(Utilities.ui.forceZInput.value) || 0;
-        // Constrain
-        xValue = Utilities.constrainNumber(xValue, -this.world.worldSize, this.world.worldSize);
-        yValue = Utilities.constrainNumber(yValue, -this.world.worldSize, this.world.worldSize);
-        zValue = Utilities.constrainNumber(zValue, -this.world.worldSize, this.world.worldSize);
-        // Update input fields
-        Utilities.ui.forceXInput.value = xValue;
-        Utilities.ui.forceYInput.value = yValue;
-        Utilities.ui.forceZInput.value = zValue;
         // Set force
         if (this.world.nodeManager.isOnly1NodeSelected) {
             this.world.nodeManager.selectedNode(1).setMotion('force', new THREE.Vector3(xValue, yValue, zValue));
@@ -313,5 +340,7 @@ export class Page {
             this.setSelectInfo("Please Ctrl-click to select exactly 2 nodes to connect.");
         }
     }
+
+
     //#endregion
 }

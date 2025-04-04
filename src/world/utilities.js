@@ -3,8 +3,11 @@ export default class Utilities {
         // Panels
         infoPanel: document.getElementById('selectedObjectInfo'),
         forcePanel: document.getElementById('forceInput'),
-        // Inputs
+        toolbar: document.getElementById('toolbar'),
+        // Range Inputs
         worldSizeInput: document.getElementById("worldSizeInput"),
+        simulationTimeInput: document.getElementById("simulationTimeInput"),
+        // Inputs
         unitSelect: document.getElementById("unitSelect"),
         forceXInput: document.getElementById('forceX'),
         forceYInput: document.getElementById('forceY'),
@@ -12,15 +15,15 @@ export default class Utilities {
         showGridCheckBox: document.getElementById("showGrid"),
         // Buttons
         addNodeButton: document.getElementById('addNode'),
-        applyForceButton: document.getElementById('applyForce'),
         deleteButton: document.getElementById('deleteSelected'),
         linkButton: document.getElementById('addMember'),
         resetViewButton: document.getElementById("resetView"),
         // Outputs
         worldSizeOutput: document.getElementById("worldSizeValue"),
+        simulationTimeOutput: document.getElementById("simulationTimeValue"),
     };
 
-    // Static Fields - Shared across all instances
+    // Input fields
     /**
      * @returns {number} The raw world size in units
      */
@@ -34,12 +37,19 @@ export default class Utilities {
         return this.ui.unitSelect ? this.ui.unitSelect.value : "m";
     }
     /**
+     * @returns {number} The simulation time in seconds
+     */
+    static get simulationTime() {
+        return this.ui.simulationTimeInput ? parseFloat(this.ui.simulationTimeInput.value) : 1;
+    }
+
+    // Static Fields - Shared across all instances
+    /**
      * @returns {number} The world size scaled to the world unit
      */
     static get worldScale() {
         return this.convertUnit(this.worldSize);
     }
-
     static unitConversion = {
         "pm": 1e-12,
         "nm": 1e-9,

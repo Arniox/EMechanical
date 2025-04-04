@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import Utilities from "../world/utilities.js";
 /** 
  * @import { TransformControls } from '/three/addons/controls/TransformControls.js'
  * @import { NodeManager } from './nodeManager.js'
@@ -16,7 +17,7 @@ export class Joiner {
         this.radius = 0.015; // Default radius for the node
 
         // Engineering properties
-        this.mass = 1;
+        this.mass = 100; // kg
         this.force = {
             vector: new THREE.Vector3(0, 0, 0),
             arrow: null,
@@ -47,8 +48,8 @@ export class Joiner {
      * @param {THREE.Scene} scene 
      */
     add(scene) {
-        this.update();
         scene.add(this.mesh);
+        this.update();
     }
 
     /**
@@ -76,26 +77,14 @@ export class Joiner {
     }
 
     /**
-     * Adds a motion vector to the node of a specific type.
-     * @param {string} type 
+     * Sets the motion vector of the node of a specific type, and auto-updates the other motion vectors
+     * using a smoothing factor to simulate inertia (momentum). This assumes that:
+     *   - this.mass is the mass (default 1)
+     *   - Utilities.simulationTime is the time step (default 1 second)
+     *   - this.force.vector, this.acceleration.vector, and this.velocity.vector are THREE.Vector3
+     * 
+     * @param {string} type - "force", "acceleration", or "velocity"
      * @param {THREE.Vector3} motionVector 
-     * @returns 
-     */
-    applyMotion(type, motionVector) {
-        if (!this[type]) {
-            console.warn(`Invalid motion type: ${type}`);
-            return;
-        }
-
-        // Apply motion to the node
-        this[type].vector.add(motionVector);
-    }
-
-    /**
-     * Sets the motion vector of the node of a specific type.
-     * @param {string} type 
-     * @param {THREE.Vector3} motionVector 
-     * @returns 
      */
     setMotion(type, motionVector) {
         if (!this[type]) {
@@ -103,8 +92,25 @@ export class Joiner {
             return;
         }
 
-        // Set motion to the node
+        // Update the specified motion vector instantly
         this[type].vector.copy(motionVector);
+
+        // Auto calculate the other motion vectors with application of Newton's laws
+        if (type === "force") {
+            // Auto compute acceleration and velocity from force: a = F / m, v = a * dt.
+            this.acceleration.vector.add(this.force.vector.clone().divideScalar(this.mass));
+            this.velocity.vector.add(this.acceleration.vector.clone().multiplyScalar(Utilities.simulationTime));
+        }
+        else if (type === "acceleration") {
+            // Auto compute force and velocity from acceleration: F = m * a, v = a * dt.
+            this.force.vector.add(this.acceleration.vector.clone().multiplyScalar(this.mass));
+            this.velocity.vector.add(this.acceleration.vector.clone().multiplyScalar(Utilities.simulationTime));
+        }
+        else if (type === "velocity") {
+            // Auto compute acceleration first then force from velocity: a = v / dt, F = m * a.
+            this.acceleration.vector.add(this.velocity.vector.clone().divideScalar(Utilities.simulationTime));
+            this.force.vector.add(this.acceleration.vector.clone().multiplyScalar(this.mass));
+        }
     }
 
     /**
@@ -170,12 +176,15 @@ export class Joiner {
 
     /**
      * Update the node's position, scale, and rotation based on its properties.
-     * @param {number} worldSize
      */
-    update(worldSize) {
-        this.createArrow("force", 0xffa500, worldSize);
-        this.createArrow("acceleration", 0x90EE90, worldSize);
-        this.createArrow("velocity", 0x72bcd4, worldSize);
+    update() {
+        // Update position
+        this.position.copy(this.mesh.position);
+
+        // Update Affects
+        this.createArrow("force", 0xffa500, Utilities.worldSize);
+        this.createArrow("acceleration", 0x90EE90, Utilities.worldSize);
+        this.createArrow("velocity", 0x72bcd4, Utilities.worldSize);
         this.createOutline();
     }
 
@@ -201,9 +210,9 @@ export class Joiner {
         }
 
         // Scale the axis to the world size
-        const ωx = this[type].vector.x / worldSize;
-        const ωy = this[type].vector.y / worldSize;
-        const ωz = this[type].vector.z / worldSize;
+        const ωx = (this[type].vector.x / worldSize) + 0.75;
+        const ωy = (this[type].vector.y / worldSize) + 0.75;
+        const ωz = (this[type].vector.z / worldSize) + 0.75;
         const arrowVector = new THREE.Vector3(ωx, ωy, ωz);
 
         // If the arrow exists and the vector is not zero, update its position
