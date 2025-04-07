@@ -10,6 +10,7 @@ export class World {
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x333333); // Dark Gray
+        this.worldBoxScale = 2.0;
 
         // Controls
         this.controls = null;
@@ -88,15 +89,16 @@ export class World {
 
     addWorldCube() {
         const halfSize = this.worldSize / 2;
+        const worldBoxScale = halfSize * this.worldBoxScale;
         const vertices = [
-            new THREE.Vector3(-halfSize, -halfSize, -halfSize),
-            new THREE.Vector3(halfSize, -halfSize, -halfSize),
-            new THREE.Vector3(halfSize, halfSize, -halfSize),
-            new THREE.Vector3(-halfSize, halfSize, -halfSize),
-            new THREE.Vector3(-halfSize, -halfSize, halfSize),
-            new THREE.Vector3(halfSize, -halfSize, halfSize),
-            new THREE.Vector3(halfSize, halfSize, halfSize),
-            new THREE.Vector3(-halfSize, halfSize, halfSize)
+            new THREE.Vector3(-worldBoxScale, -halfSize, -worldBoxScale),
+            new THREE.Vector3(worldBoxScale, -halfSize, -worldBoxScale),
+            new THREE.Vector3(worldBoxScale, halfSize, -worldBoxScale),
+            new THREE.Vector3(-worldBoxScale, halfSize, -worldBoxScale),
+            new THREE.Vector3(-worldBoxScale, -halfSize, worldBoxScale),
+            new THREE.Vector3(worldBoxScale, -halfSize, worldBoxScale),
+            new THREE.Vector3(worldBoxScale, halfSize, worldBoxScale),
+            new THREE.Vector3(-worldBoxScale, halfSize, worldBoxScale)
         ];
 
         // Create materials for the cube edges.
@@ -115,7 +117,7 @@ export class World {
         this.worldCubeGroup.add(this.createLine(vertices[1], vertices[2], materialY));
         this.worldCubeGroup.add(this.createLine(vertices[4], vertices[7], materialY));
         this.worldCubeGroup.add(this.createLine(vertices[5], vertices[6], materialY));
-        this.worldCubeGroup.add(this.createLine(vertices[0], vertices[4], materialZ));
+        this.worldCubeGroup.add(this.createLine(vertices[0], vertices[4], materialZ)); //e
         this.worldCubeGroup.add(this.createLine(vertices[1], vertices[5], materialZ));
         this.worldCubeGroup.add(this.createLine(vertices[2], vertices[6], materialZ));
         this.worldCubeGroup.add(this.createLine(vertices[3], vertices[7], materialZ));
@@ -123,7 +125,9 @@ export class World {
     }
 
     addWorldGrid() {
-        this.gridHelper = new THREE.GridHelper(1, 10, 0x888888, 0x444444);
+        const gridSize = this.worldSize * this.worldBoxScale;
+        const gridDivisions = (this.worldSize * 10) * this.worldBoxScale;
+        this.gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x888888, 0x444444);
         this.scene.add(this.gridHelper);
     }
 
