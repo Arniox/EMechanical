@@ -6,12 +6,12 @@ export class Node extends WorldElement {
     public isSelected: boolean;
     public selectedIndex: number;
     public outlineMesh: THREE.Mesh;
-    public override force: { x: number; y: number; z: number };
+    public override force: THREE.Vector3;
 
     constructor(position: THREE.Vector3) {
         super();
         this.position = position;
-        this.force = { x: 0, y: 0, z: 0 };
+        this.force = new THREE.Vector3(0, 0, 0 );
         this.isSelected = false;
         this.selectedIndex = 0;
 

@@ -36,7 +36,7 @@ const WorldComponent: React.FC<WorldComponentProps> = ({ world }) => {
 
     // Subscribe to node selection changes
     world.on("nodeSelected", (node: Node | null) => {
-      setSelectedElement(node);
+      setSelectedNode(node);
     });
 
     return () => {
@@ -55,9 +55,9 @@ const WorldComponent: React.FC<WorldComponentProps> = ({ world }) => {
   
   // Handle force input update and info panel
   useEffect(() => {
-    if (world && selectedElement) {
+    if (world && selectedNode) {
       // Update force input values in the UI
-      const force = selectedElement.force;
+      const force = selectedNode.force;
       const forceInputs = ['forceXInput', 'forceYInput', 'forceZInput'];
       forceInputs.forEach(id => {
         const input = document.getElementById(id) as HTMLInputElement;
@@ -76,11 +76,11 @@ const WorldComponent: React.FC<WorldComponentProps> = ({ world }) => {
         }
       });
     }
-  }, [selectedElement, world]);
+  }, [selectedNode, world]);
 
   return (
     <div>
-      <InfoPanel />
+      <InfoPanel world={world} />
       <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(255, 255, 255, 0.7)', padding: 10 }}>
         <button onClick={() => world?.addNode()}>Add Node</button>
         <button onClick={() => world?.resetCameraView()}>Reset View</button>

@@ -1,8 +1,7 @@
-ts
 import * as THREE from 'three';
 import { WorldElement } from './WorldElement';
 import { Node } from './Node';
-import Utilities from '../world/utilities';
+import Utilities from '../world/Utilities';
 
 export class Beam extends WorldElement {
     public startNode: Node;
@@ -17,7 +16,7 @@ export class Beam extends WorldElement {
 
         const geometry = new THREE.BufferGeometry().setFromPoints([this.startNode.position, this.endNode.position]);
         const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-        this.mesh = new THREE.Line(geometry, material);
+        this.mesh = new THREE.LineSegments(geometry, material);
     }
 
     public override update(deltaTime: number): void {
