@@ -41,6 +41,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
     const value = parseFloat(event.target.value);
     Utilities.setWorldScale(value);
     setWorldScale(Utilities.getWorldScale());
+    if (world) {
+      world.updateWorldScale(value);
+    }
   };
 
   const handleForceInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
