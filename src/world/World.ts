@@ -20,7 +20,7 @@ export class World extends EventEmitter {
     public camera: THREE.PerspectiveCamera;
     public renderer: THREE.WebGLRenderer;
 
-    constructor() {
+    constructor(container: HTMLCanvasElement) {
         super();
         // Scene
         this.scene = new THREE.Scene();
@@ -45,7 +45,7 @@ export class World extends EventEmitter {
 
         // Rendering and Camera
         this.addCamera();
-        this.addRenderer();
+        this.addRenderer(container as HTMLCanvasElement);
 
         // Controls
         this.addControls();
@@ -138,18 +138,18 @@ export class World extends EventEmitter {
         this.camera.lookAt(0, 0, 0); // Ensure it looks at the center
     }
 
-    private addRenderer(): void {
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(window.innerWidth, window.innerHeight); // Use window dimensions
+    private addRenderer(canvas: HTMLCanvasElement): void {
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        document.body.appendChild(this.renderer.domElement);
+    
     }
-
+    
     private addControls(): void {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.target.set(0, 0, 0); // Explicitly set target to origin
+        this.controls.target.set(0, 0, 0);// Explicitly set target to origin
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.screenSpacePanning = true;

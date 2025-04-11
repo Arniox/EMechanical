@@ -1,38 +1,39 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import Utilities from '../world/utilities';
+import { World } from '../world/World';
+import Utilities from '../world/Utilities';
 
-const Toolbar: React.FC = () => {
-  const [worldSize, setWorldSize] = useState(Utilities.worldSize);
-  const [unit, setUnit] = useState(Utilities.unit);
+interface ToolbarProps {
+  world: World;
+}
+
+const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
+  const [worldSize, setWorldSize] = useState(Utilities.getWorldSize());  
+  const [unit, setUnit] = useState(Utilities.getUnit());
   const [forceX, setForceX] = useState<number>(0);
   const [forceY, setForceY] = useState<number>(0);
   const [forceZ, setForceZ] = useState<number>(0);
   const showGridCheckboxRef = useRef<HTMLInputElement>(null);
 
   const updateWorldSizeOutput = () => {
-    const worldScaleString = Utilities.stringifiyUnit(Utilities.worldScale);
+    const worldScaleString = Utilities.stringifiyUnit(Utilities.getWorldScale());
     const worldScaleOutput = unit === "m"
       ? ""
       : ` - <span class="unitConversionResult">${worldScaleString} m</span>`;
 
-    const worldSizeOutputElement = document.getElementById("worldSizeOutput");
-    if (worldSizeOutputElement) {
-      worldSizeOutputElement.innerHTML = `${Utilities.worldSize} ${unit}${worldScaleOutput}`;
-    }
-  };
+  };  
 
   useEffect(() => {
     updateWorldSizeOutput();
   }, [worldSize, unit]);
 
   const handleUnitSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    Utilities.unit = event.target.value;
+    Utilities.setUnit(event.target.value);    
     setUnit(event.target.value);
   };
 
   const handleShowGridCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    Utilities.keyState.showGrid = event.target.checked;
+    Utilities.getKeyState().showGrid = event.target.checked;
     // Dispatch a custom event to notify about the grid visibility change
   };
 
@@ -40,15 +41,6 @@ const Toolbar: React.FC = () => {
     const value = parseFloat(event.target.value);
     Utilities.setWorldSize(value);
     setWorldSize(value);
-    // Update force input max/min attributes
-    const forceInputs = ['forceXInput', 'forceYInput', 'forceZInput'];
-    forceInputs.forEach(id => {
-      const input = document.getElementById(id) as HTMLInputElement;
-      if (input) {
-        input.max = String(value);
-        input.min = String(-value);
-      }
-    });
     updateWorldSizeOutput();
   };
 
@@ -68,20 +60,20 @@ const Toolbar: React.FC = () => {
     }
   };
 
-  const handleAddNodeButtonClick = () => {    
-    document.dispatchEvent(new Event("addNodeEvent"));
+  const handleAddNodeButtonClick = () => {
+    world.addNode();
   };
 
   const handleDeleteSelectedButtonClick = () => {
-    document.dispatchEvent(new Event("deleteEvent"));
+    world.deleteSelected();
   };
 
   const handleLinkButtonClick = () => {
-    document.dispatchEvent(new Event("linkEvent"));
+    world.linkSelected();
   };
 
   const handleResetViewButtonClick = () => {
-    document.dispatchEvent(new Event("resetCameraViewEvent"));
+    world.resetCameraView();
   };
 
 
@@ -103,9 +95,9 @@ const Toolbar: React.FC = () => {
     }
   }, []);
 
-  return (
+  return (    
     <div id="toolbar">
-      <select id="unitSelect" value={unit} onChange={handleUnitSelectChange}>
+      <select id="unitSelect" value={Utilities.getUnit()} onChange={handleUnitSelectChange}>
         <option value="mm">mm</option>
         <option value="m">m</option>
       </select>
@@ -122,8 +114,8 @@ const Toolbar: React.FC = () => {
 
       <div>
         <label htmlFor="worldSizeInput">World Size:</label>
-        <input
-          type="number"
+        <input          
+          type="number" 
           id="worldSizeInput"
           value={worldSize}
           onChange={handleWorldSizeInputChange}

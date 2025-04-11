@@ -1,23 +1,20 @@
-tsx
 // src/components/WorldComponent.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { World } from '../world/World';
 import * as THREE from 'three';
-import { Node } from '../models/Node.ts';
-import Utilities from '../world/utilities';
+import { Node } from '../models/Node';
+import Utilities from '../world/Utilities';
 import InfoPanel from '../UI/InfoPanel';
 
-interface WorldComponentProps { }
+interface WorldComponentProps {
+  world: World;
+}
 
-const WorldComponent: React.FC<WorldComponentProps> = () => {
-  const worldRef = useRef<World | null>(null);
+const WorldComponent: React.FC<WorldComponentProps> = ({ world }) => {
   const previousTime = useRef<number | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   useEffect(() => {
-    worldRef.current = new World();
-    const world = worldRef.current;
-
     // Animation Loop
     const animate = () => { requestAnimationFrame(animate);
       if (world) {
@@ -45,21 +42,20 @@ const WorldComponent: React.FC<WorldComponentProps> = () => {
     return () => {
       if (world) {
         world.removeAllListeners();
-        worldRef.current = null;
       }
     };
   }, []);
 
   // Update grid visibility
   useEffect(() => {
-    if (worldRef.current && worldRef.current.gridHelper) {
-      worldRef.current.gridHelper.visible = Utilities.keyState.showGrid;
+    if (world && world.gridHelper) {
+      world.gridHelper.visible = Utilities.keyState.showGrid;
     }
   }, [Utilities.keyState.showGrid]);
   
   // Handle force input update and info panel
   useEffect(() => {
-    if (worldRef.current && selectedElement) {
+    if (world && selectedElement) {
       // Update force input values in the UI
       const force = selectedElement.force;
       const forceInputs = ['forceXInput', 'forceYInput', 'forceZInput'];
@@ -80,16 +76,16 @@ const WorldComponent: React.FC<WorldComponentProps> = () => {
         }
       });
     }
-  }, [selectedElement, worldRef.current]);
+  }, [selectedElement, world]);
 
   return (
     <div>
       <InfoPanel />
       <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(255, 255, 255, 0.7)', padding: 10 }}>
-        <button onClick={() => worldRef.current?.addNode()}>Add Node</button>
-        <button onClick={() => worldRef.current?.resetCameraView()}>Reset View</button>
-        <button onClick={() => worldRef.current?.deleteSelected()}>Delete Selected</button>
-        <button onClick={() => worldRef.current?.linkSelected()}>Link Selected</button>
+        <button onClick={() => world?.addNode()}>Add Node</button>
+        <button onClick={() => world?.resetCameraView()}>Reset View</button>
+        <button onClick={() => world?.deleteSelected()}>Delete Selected</button>
+        <button onClick={() => world?.linkSelected()}>Link Selected</button>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { WorldElement } from './WorldElement';
-import Utilities from '../world/utilities';
+import Utilities from '../world/Utilities';
 
 export class Node extends WorldElement {
     public isSelected: boolean;

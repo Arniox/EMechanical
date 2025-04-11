@@ -13,20 +13,20 @@
   "author": "Nikkolas Diehl",
   "license": "ISC",
   "dependencies": {
-    "@tailwindcss/postcss": "^4.1.3",
-    "@types/node": "^22.14.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.2",
-    "autoprefixer": "^10.4.21",
-    "next": "^15.3.0",
-    "postcss": "^8.5.3",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "tailwindcss": "^4.1.3",
-    "three": "^0.175.0",
-    "typescript": "^5.8.3"
+    "@types/node": "*",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "autoprefixer": "*",
+    "next": "14.0.0",
+    "postcss": "*",
+    "react": "*",
+    "react-dom": "*",
+    "tailwindcss": "*",
+    "three": "*",
+    "typescript": "*"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "@types/three": "^0.175.0",
+    "http-server": "14.1.1"
   }
 }
