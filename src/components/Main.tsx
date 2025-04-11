@@ -16,7 +16,7 @@ const Main: React.FC = () => {
     }, []);
 
     return (
-        <div id="canvasContainer" ref={containerRef} style={{ width: '100vw', height: '100vh' }}>
+        <div id="canvasMainContainer" ref={containerRef} style={{ width: '100vw', height: '100vh' }}>
             {canvasRef.current && (
                 <Page canvas={canvasRef.current} />
             )}

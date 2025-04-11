@@ -18,17 +18,17 @@ export class Utilities {
         nmi: 1852,
     };
 
-    private static _worldSize: number = 1;
+    private static _worldScale: number = 1;
     private static _unit: string = "m";
     static keyState: { [key: string]: boolean } = { ControlLeft: false };
     static simulationTime: number = 1;
 
-    static getWorldSize(): number {
-        return Utilities._worldSize;
+    static getWorldScale(): number {
+        return Utilities._worldScale;
     }
 
-    static setWorldSize(value: number): void {
-        Utilities._worldSize = value;
+    static setWorldScale(value: number): void {
+        Utilities._worldScale = value;
     }
 
     static getUnit(): string {
@@ -37,10 +37,6 @@ export class Utilities {
 
     static setUnit(value: string): void {
         Utilities._unit = value;
-    }
-
-    static getWorldScale(): number {
-        return Utilities.convertUnit(Utilities._worldSize);
     }
 
     static convertUnit(value: number): number {
