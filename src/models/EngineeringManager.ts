@@ -76,13 +76,31 @@ export class EngineeringManager {
         }
     }
 
-    updateAllBeams(deltaTime: number): void {
-        // Update all beams in the structure in async
-        this.beams.map(beam => beam.update(deltaTime));
+    unselectAllNodes() {
+        this.nodes.forEach((node) => {
+            node.isSelected = false;
+            node.select(null);
+        });
     }
 
+    addNodeToSelection(clickedNode: Node): void {
+        if (this.selectedNodes.length >= 2) {
+            this.unselectAllNodes();
+        }
+        clickedNode.isSelected = !clickedNode.isSelected;
+        clickedNode.select(null);
+    }
+    
+    selectNode(clickedNode: Node): void {
+        clickedNode.isSelected = !clickedNode.isSelected;
+        clickedNode.select(null);
+    }
+
+    updateAllBeams(deltaTime: number): void {
+      this.beams.forEach(beam => beam.update(deltaTime));
+    }
+    
     updateAllNodes(deltaTime: number): void {
-        // Update all nodes in the structure in async
-        this.nodes.map(node => node.update(deltaTime));
+      this.nodes.forEach(node => node.update(deltaTime));
     }
 }

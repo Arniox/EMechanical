@@ -1,6 +1,6 @@
 // src/world/World.ts
 import * as THREE from "three";
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { EngineeringManager } from '../models/EngineeringManager';
 import { Node } from "../models/Node";
 
@@ -49,7 +49,7 @@ export class World extends EventEmitter {
 
         if (this.camera && this.renderer) {
             this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
-            this.scene?.add(this.transformControls);
+            this.scene?.add(this.transformControls.getHelper());
         }
 
 
@@ -247,7 +247,7 @@ export class World extends EventEmitter {
 
    private handleMultiSelectNode(clickedNode: Node): void {
         if (!this.engineeringManager || !this.scene) return;
-
+        
         this.engineeringManager.selectNode(clickedNode);
         const selectedNodes = this.engineeringManager.selectedNodes;
 
@@ -269,7 +269,7 @@ export class World extends EventEmitter {
 
     private handleSingleSelectNode(clickedNode: Node): void {
         clickedNode.select(this.transformControls);
-    }
+}
 
     private unselectAllNodes(): void {
         // this.engineeringManager.selectedNodes.forEach(node => node.select(this.transformControls, false));
@@ -330,7 +330,7 @@ export class World extends EventEmitter {
      * Updates the world, including the camera and controls.
      * @param {number} deltaTime - The time elapsed since the last update.
      */
-    public updateAll(deltaTime: number): void {
+    public updateAll(deltaTime: number ): void {
         if (this.engineeringManager) {
             const selectedNodes = this.engineeringManager.selectedNodes;
             for (const node of selectedNodes) {

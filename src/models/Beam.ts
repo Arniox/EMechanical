@@ -22,7 +22,7 @@ export class Beam extends WorldElement {
         this.restDistance = this.startNode.position.distanceTo(this.endNode.position);
     }
 
-    public override update(deltaTime: number): void {
+    public override update(deltaTime: number): void{
         const currentDistance = this.startNode.position.distanceTo(this.endNode.position);
         const distanceDifference = currentDistance - this.restDistance;
         const forceStrength = 100;

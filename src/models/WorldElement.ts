@@ -11,7 +11,7 @@ export abstract class WorldElement {
         this.mesh = new THREE.Mesh();
     }
 
-    public abstract update(deltaTime: number): void;
+    public update?(deltaTime: number): void;
 
     public add(scene: THREE.Scene): void {
         scene.add(this.mesh);

@@ -38,11 +38,13 @@ export class Node extends WorldElement {
     }
 
     public override update(deltaTime: number): void {
+        if (super.update) {
+            super.update(deltaTime);
+        }
         // Update the node position based on force
         this.position.add(new THREE.Vector3(this.force.x, this.force.y, this.force.z).multiplyScalar(deltaTime));
         this.mesh.position.copy(this.position);
-
-        this.forceArrow.update(this.force, this.position);
+        this.forceArrow.setDirection(this.force, this.position);
     }
 
     public override add(scene: THREE.Scene): void {
@@ -54,14 +56,14 @@ export class Node extends WorldElement {
         this.force.copy(force);
     }
 
-    public select(transformControls: TransformControls | null): void {
-        this.isSelected = !!transformControls;
-        this.outlineMesh.visible = this.isSelected;
-        transformControls?.attach(this.mesh);
-        if (transformControls) {
-            transformControls.addEventListener('change', () => {
-                this.position.copy(this.mesh.position);
-            });
+   public select(transformControls: TransformControls | null): void {
+        this.isSelected = transformControls !== null;
+        this.outlineMesh.visible = this.isSelected;        
+        if (transformControls) {            
+            transformControls.attach(this.mesh);
+        } else {
+            // Detach controls when no controls are provided (deselect)
+            // transformControls?.detach();
         }
     }
 
