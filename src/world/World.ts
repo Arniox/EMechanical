@@ -1,7 +1,9 @@
 // src/world/World.ts
 import * as THREE from "three";
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { EngineeringManager } from '../models/EngineeringManager';
 import { Node } from "../models/Node";
+
 import EventEmitter from "eventemitter3";
 
 export class World extends EventEmitter {
@@ -15,6 +17,7 @@ export class World extends EventEmitter {
     public gridHelper: THREE.GridHelper | null = null;
     public camera: THREE.PerspectiveCamera | null = null;;
     public renderer: THREE.WebGLRenderer | null = null;
+    public transformControls: TransformControls | null = null;
 
     constructor(container: HTMLCanvasElement) {
     super();
@@ -44,11 +47,46 @@ export class World extends EventEmitter {
             this.renderer.domElement.addEventListener("click", this.mouseClickEventHandler.bind(this));
         }
 
+        if (this.camera && this.renderer) {
+            this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
+            this.scene?.add(this.transformControls);
+        }
+
+
     }
 
-    private mouseClickEventHandler(event: MouseEvent): void {
-        console.log("Mouse Click Event Handler");
-        // TODO: Implement mouse click handling logic here.
+   private mouseClickEventHandler(event: MouseEvent): void {
+        if (!this.renderer || !this.camera || !this.scene || !this.engineeringManager) return;
+
+        // Calculate mouse position in normalized device coordinates (-1 to +1) for both components.
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / this.renderer.domElement.clientWidth) * 2 - 1;
+        mouse.y = -(event.clientY / this.renderer.domElement.clientHeight) * 2 + 1;
+
+        // Raycasting
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, this.camera);
+
+        // Find intersected objects.
+        const intersects = raycaster.intersectObjects(this.scene.children, true);
+
+        if (intersects.length > 0) {
+            const intersected = intersects[0].object;
+
+            // Traverse up the parent chain to find the Node object if the intersected object is part of a node.
+            let nodeObject = intersected;
+            while (nodeObject && !(nodeObject instanceof Node)) {
+                nodeObject = nodeObject.parent!;
+            }
+
+            if (nodeObject instanceof Node) {
+                this.handleSingleSelectNode(nodeObject);
+            } else {
+                this.transformControls?.detach();
+            }
+        } else {
+            this.transformControls?.detach();
+        }
     }
 
 
@@ -224,16 +262,7 @@ export class World extends EventEmitter {
     }
 
     private handleSingleSelectNode(clickedNode: Node): void {
-        // this.unselectAllNodes();
-        // clickedNode.select(this.transformControls, false);
-
-        if (this.engineeringManager && this.engineeringManager.selectedNodes){
-            this.infoPanelText("Selected node for movement");
-            this.emit("nodeSelected", clickedNode);
-        } else {
-            this.infoPanelText("No object selected");
-            this.emit("nodeSelected", null);
-        }
+        clickedNode.select(this.transformControls);
     }
 
     private unselectAllNodes(): void {
@@ -292,6 +321,10 @@ export class World extends EventEmitter {
      */
     public updateAll(deltaTime: number): void {
         if (this.engineeringManager) {
+            const selectedNodes = this.engineeringManager.selectedNodes;
+            for (const node of selectedNodes) {
+                node.position.copy(node.mesh.position);
+            }
             this.engineeringManager.updateAllNodes(deltaTime);
             this.engineeringManager.updateAllBeams(deltaTime);
         }

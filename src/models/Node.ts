@@ -38,28 +38,20 @@ export class Node extends WorldElement {
         this.mesh.position.copy(this.position);
     }
 
-    public select(transformControls: TransformControls | null, toggle: boolean): void {
-        this.isSelected = toggle ? !this.isSelected : true;
-        if (this.isSelected) {
-            this.selectedIndex = Utilities.keyState.ControlLeft ? 2 : 1;
-            this.outlineMesh.visible = true;
-            this.mesh.material = new THREE.MeshStandardMaterial({ color: 0xff00ff, roughness: 0.5, metalness: 0.5 });
-            if (transformControls && !transformControls.object) {
-                transformControls.attach(this.mesh);
-            }
-        }
-        else {
-            this.selectedIndex = 0;
-            this.outlineMesh.visible = false;
-            this.mesh.material = new THREE.MeshStandardMaterial({ color: 0x00ffff, roughness: 0.5, metalness: 0.5 });
-            if (transformControls && transformControls.object) {
-                transformControls.detach();
-            }
-        }
-    }
-
     public override add(scene: THREE.Scene): void {
         scene.add(this.mesh);
+    }
+
+    public select(transformControls: TransformControls | null): void {
+        this.isSelected = !!transformControls;
+        this.outlineMesh.visible = this.isSelected;
+        transformControls?.attach(this.mesh);
+        if (transformControls) {
+            transformControls.addEventListener('change', () => {
+                this.position.copy(this.mesh.position);
+            });
+        }
+
     }
 
     public override delete(scene: THREE.Scene): void {
