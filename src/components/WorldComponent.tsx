@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { World } from '../world/World';
 import * as THREE from 'three';
 import { Node } from '../models/Node';
-import Utilities from '../world/Utilities';
 import InfoPanel from '../UI/InfoPanel';
 
 interface WorldComponentProps {
@@ -38,11 +37,6 @@ const WorldComponent: React.FC<WorldComponentProps> = ({ world }) => {
     world.on("nodeSelected", (node: Node | null) => {
       setSelectedNode(node);
     });
-
-    return () => {
-      if (world) {
-        world.removeAllListeners();
-      }
     };
   }, []);
 
@@ -75,6 +69,12 @@ const WorldComponent: React.FC<WorldComponentProps> = ({ world }) => {
           }
         }
       });
+    }
+
+    return () => {
+      if (world) {
+        world.removeAllListeners();
+      }
     }
   }, [selectedNode, world]);
 

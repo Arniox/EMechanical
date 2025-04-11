@@ -8,7 +8,7 @@ interface ToolbarProps {
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
-  const [worldSize, setWorldSize] = useState(Utilities.getWorldSize());  
+  const [worldScale, setWorldScale] = useState(Utilities.getWorldScale());  
   const [unit, setUnit] = useState(Utilities.getUnit());
   const [forceX, setForceX] = useState<number>(0);
   const [forceY, setForceY] = useState<number>(0);
@@ -25,7 +25,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
 
   useEffect(() => {
     updateWorldSizeOutput();
-  }, [worldSize, unit]);
+  }, [worldScale, unit]);
 
   const handleUnitSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     Utilities.setUnit(event.target.value);    
@@ -37,11 +37,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
     // Dispatch a custom event to notify about the grid visibility change
   };
 
-  const handleWorldSizeInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleWorldScaleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(event.target.value);
-    Utilities.setWorldSize(value);
-    setWorldSize(value);
-    updateWorldSizeOutput();
+    Utilities.setWorldScale(value);
+    setWorldScale(Utilities.getWorldScale());
   };
 
   const handleForceInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,13 +99,13 @@ const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
         <label htmlFor="showGridCheckBox">Show Grid</label>
       </div>
 
-      <div>
-        <label htmlFor="worldSizeInput">World Size:</label>
+     <div>
+        <label htmlFor="worldScaleInput">World Scale:</label>
         <input          
           type="number" 
-          id="worldSizeInput"
-          value={worldSize}
-          onChange={handleWorldSizeInputChange}
+          id="worldScaleInput"
+          value={Utilities.getWorldScale()}
+          onChange={handleWorldScaleInputChange}
         />
         <output id="worldSizeOutput" />
       </div>
