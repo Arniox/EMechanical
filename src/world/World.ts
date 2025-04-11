@@ -133,6 +133,54 @@ export class World extends EventEmitter {
             this.scene.add(this.gridHelper);
     }
 
+    public updateWorldScale(newScale: number): void {
+        this.worldBoxScale = newScale;
+    
+        if (this.worldCubeGroup) {
+            // Remove existing cube edges
+            this.worldCubeGroup.children = [];
+    
+            // Recreate cube edges with new scale
+            const halfSize: number = 1 / 2;
+            const worldBoxScale: number = halfSize * this.worldBoxScale;
+            const vertices: THREE.Vector3[] = [
+                new THREE.Vector3(-worldBoxScale, -halfSize, -worldBoxScale),
+                new THREE.Vector3(worldBoxScale, -halfSize, -worldBoxScale),
+                new THREE.Vector3(worldBoxScale, halfSize, -worldBoxScale),
+                new THREE.Vector3(-worldBoxScale, halfSize, -worldBoxScale),
+                new THREE.Vector3(-worldBoxScale, -halfSize, worldBoxScale),
+                new THREE.Vector3(worldBoxScale, -halfSize, worldBoxScale),
+                new THREE.Vector3(worldBoxScale, halfSize, worldBoxScale),
+                new THREE.Vector3(-worldBoxScale, halfSize, worldBoxScale)
+            ];
+    
+            const materialX: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+            const materialY: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+            const materialZ: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+    
+            this.worldCubeGroup.add(this.createLine(vertices[0], vertices[1], materialX));
+            this.worldCubeGroup.add(this.createLine(vertices[3], vertices[2], materialX));
+            this.worldCubeGroup.add(this.createLine(vertices[4], vertices[5], materialX));
+            this.worldCubeGroup.add(this.createLine(vertices[7], vertices[6], materialX));
+            this.worldCubeGroup.add(this.createLine(vertices[0], vertices[3], materialY));
+            this.worldCubeGroup.add(this.createLine(vertices[1], vertices[2], materialY));
+            this.worldCubeGroup.add(this.createLine(vertices[4], vertices[7], materialY));
+            this.worldCubeGroup.add(this.createLine(vertices[5], vertices[6], materialY));
+            this.worldCubeGroup.add(this.createLine(vertices[0], vertices[4], materialZ));
+            this.worldCubeGroup.add(this.createLine(vertices[1], vertices[5], materialZ));
+            this.worldCubeGroup.add(this.createLine(vertices[2], vertices[6], materialZ));
+            this.worldCubeGroup.add(this.createLine(vertices[3], vertices[7], materialZ));
+        }
+    
+        if (this.scene && this.gridHelper) {
+            this.scene.remove(this.gridHelper); // Remove old grid
+            const gridSize: number = 1 * this.worldBoxScale;
+            const gridDivisions: number = (1 * 10) * this.worldBoxScale;
+            this.gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x888888, 0x444444);
+            this.scene.add(this.gridHelper); // Add new grid
+        }
+    }
+
     private addCamera(): void {
         this.camera = new THREE.PerspectiveCamera(
             75,

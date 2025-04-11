@@ -99,10 +99,13 @@ const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
         <label htmlFor="showGridCheckBox">Show Grid</label>
       </div>
 
-     <div>
+      <div>
         <label htmlFor="worldScaleInput">World Scale:</label>
-        <input          
-          type="number" 
+        <input
+          type="range"
+          min={0.5}
+          max={5}
+          step={0.1}
           id="worldScaleInput"
           value={Utilities.getWorldScale()}
           onChange={handleWorldScaleInputChange}
