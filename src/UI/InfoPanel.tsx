@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { World } from '../world/World';
 
 interface InfoPanelProps {
@@ -13,6 +13,10 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ world }) => {
     world.on("infoPanelTextChanged", (text: string) => {
       setInfoText(text);
     });
+
+    return () => {
+      world.off("infoPanelTextChanged", setInfoText);
+    };
   }, []);
 
   return <div id="infoPanel">{infoText}</div>;

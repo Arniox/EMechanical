@@ -1,35 +1,27 @@
 // src/world/World.ts
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-import { EngineeringManager } from "../models/EngineeringManager";
+import { EngineeringManager } from '../models/EngineeringManager';
 import { Node } from "../models/Node";
 import EventEmitter from "eventemitter3";
 
 export class World extends EventEmitter {
-    public scene: THREE.Scene;
+    public scene: THREE.Scene | null = null;
     public worldBoxScale: number;
-    public controls: OrbitControls;
-    public transformControls: TransformControls;
-    public engineeringManager: EngineeringManager;
-    public ambientLight: THREE.AmbientLight;
-    public directionalLight: THREE.DirectionalLight;
-    public fillLight: THREE.DirectionalLight;
-    public worldCubeGroup: THREE.Group;
-    public gridHelper: THREE.GridHelper;
-    public camera: THREE.PerspectiveCamera;
-    public renderer: THREE.WebGLRenderer;
+    public engineeringManager: EngineeringManager | null = null;
+    public ambientLight: THREE.AmbientLight | null = null;
+    public directionalLight: THREE.DirectionalLight | null = null;
+    public fillLight: THREE.DirectionalLight | null = null;
+    public worldCubeGroup: THREE.Group | null = null;
+    public gridHelper: THREE.GridHelper | null = null;
+    public camera: THREE.PerspectiveCamera | null = null;;
+    public renderer: THREE.WebGLRenderer | null = null;
 
     constructor(container: HTMLCanvasElement) {
-        super();
+    super();
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x333333); // Dark Gray
         this.worldBoxScale = 2.0;
-
-        // Controls
-        this.controls = null as unknown as OrbitControls;
-        this.transformControls = null as unknown as TransformControls;
 
         // Engineering Manager
         this.engineeringManager = new EngineeringManager();
@@ -47,40 +39,50 @@ export class World extends EventEmitter {
         this.addCamera();
         this.addRenderer(container as HTMLCanvasElement);
 
-        // Controls
-        this.addControls();
-        this.addTransformControls(); // Initialize but don't attach to the scene yet
-
         // Event Listeners
-        this.renderer.domElement.addEventListener("click", this.mouseClickEventHandler.bind(this));
+        if (this.renderer) {
+            this.renderer.domElement.addEventListener("click", this.mouseClickEventHandler.bind(this));
+        }
 
     }
+
+    private mouseClickEventHandler(event: MouseEvent): void {
+        console.log("Mouse Click Event Handler");
+        // TODO: Implement mouse click handling logic here.
+    }
+
 
     //#region Initialization
     private addAmbientLight(): void {
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.scene.add(this.ambientLight);
+        if (this.scene && this.ambientLight) {
+            this.scene.add(this.ambientLight);
+        }
     }
 
     private addDirectionalLight(): void {
         this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        this.directionalLight.position.set(5, 10, 7.5);
-        this.directionalLight.castShadow = true;
-        this.directionalLight.shadow.camera.near = 0.1;
-        this.directionalLight.shadow.camera.far = 500;
-        this.directionalLight.shadow.camera.left = -10;
-        this.directionalLight.shadow.camera.right = 10;
-        this.directionalLight.shadow.camera.top = 10;
-        this.directionalLight.shadow.camera.bottom = -10;
-        this.directionalLight.shadow.mapSize.width = 1024;
-        this.directionalLight.shadow.mapSize.height = 1024;
-        this.scene.add(this.directionalLight);
+        if (this.directionalLight) {
+            this.directionalLight.position.set(5, 10, 7.5);
+            this.directionalLight.castShadow = true;
+            this.directionalLight.shadow.camera.near = 0.1;
+            this.directionalLight.shadow.camera.far = 500;
+            this.directionalLight.shadow.camera.left = -10;
+            this.directionalLight.shadow.camera.right = 10;
+            this.directionalLight.shadow.camera.top = 10;
+            this.directionalLight.shadow.camera.bottom = -10;
+            this.directionalLight.shadow.mapSize.width = 1024;
+            this.directionalLight.shadow.mapSize.height = 1024;
+            this.scene?.add(this.directionalLight);
+        }
     }
 
     private addFillLight(): void {
         this.fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        this.fillLight.position.set(-5, 2, -7.5);
-        this.scene.add(this.fillLight);
+        if (this.fillLight) this.fillLight.position.set(-5, 2, -7.5);
+        if (this.scene && this.fillLight) {
+            this.scene.add(this.fillLight);
+        }
     }
 
     private addWorldCube(): void {
@@ -117,14 +119,18 @@ export class World extends EventEmitter {
         this.worldCubeGroup.add(this.createLine(vertices[1], vertices[5], materialZ));
         this.worldCubeGroup.add(this.createLine(vertices[2], vertices[6], materialZ));
         this.worldCubeGroup.add(this.createLine(vertices[3], vertices[7], materialZ));
-        this.scene.add(this.worldCubeGroup);
+        if (this.scene && this.worldCubeGroup){
+            this.scene.add(this.worldCubeGroup);
+
+        }
     }
 
     private addWorldGrid(): void {
         const gridSize: number =  1 * this.worldBoxScale;
         const gridDivisions: number = ( 1 * 10) * this.worldBoxScale;
         this.gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x888888, 0x444444);
-        this.scene.add(this.gridHelper);
+        if (this.scene && this.gridHelper)
+            this.scene.add(this.gridHelper);
     }
 
     private addCamera(): void {
@@ -134,87 +140,35 @@ export class World extends EventEmitter {
             0.1,
             1000
         );
-        this.camera.position.set(1.2, 1.2, 2.0);
-        this.camera.lookAt(0, 0, 0); // Ensure it looks at the center
+        if (this.camera) {
+            this.camera.position.set(1.2, 1.2, 2.0);
+            this.camera.lookAt(0, 0, 0); // Ensure it looks at the center
+        }
     }
 
     private addRenderer(canvas: HTMLCanvasElement): void {
         this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    
-    }
-    
-    private addControls(): void {
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.target.set(0, 0, 0);// Explicitly set target to origin
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.screenSpacePanning = true;
-        this.controls.minDistance = 0.5;
-        this.controls.maxDistance = 10;
-        this.controls.mouseButtons = {
-            LEFT: THREE.MOUSE.ROTATE,
-            MIDDLE: THREE.MOUSE.PAN,
-            RIGHT: THREE.MOUSE.ROTATE,
-        };
-    }
-
-    private addTransformControls(): void {
-        this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
-        this.scene.add(this.transformControls); // Attach to the scene here
-        this.transformControls.setMode("translate");
-        this.transformControls.setSize(0.5); // Increase gizmo size so it's more visible
-
-        // Add event listeners for transform controls
-        this.transformControls.addEventListener("mouseDown", () => {
-            this.controls.enabled = false;
-        });
-        this.transformControls.addEventListener("mouseUp", () => {
-            this.controls.enabled = true;
-        });
-    }
-    //#endregion
-
-    //#region Event Handlers
-    public mouseClickEventHandler(event: MouseEvent): void {
-        const mouse = new THREE.Vector2();
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, this.camera);
-
-        const intersections = raycaster.intersectObjects(this.engineeringManager.nodeMeshes);
-
-        if (intersections.length > 0) {
-            const intersectedNodeMesh = intersections[0].object;
-            const clickedNode = this.engineeringManager.nodes.find(node => node.mesh === intersectedNodeMesh);
-
-            if (clickedNode) {
-                if (Utilities.keyState.ControlLeft) {
-                    this.handleMultiSelectNode(clickedNode);
-                } else {
-                    this.handleSingleSelectNode(clickedNode);
-                }
-            }
-        } else {
-            this.unselectAllNodes();
+        if (this.renderer) {
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+            this.renderer.shadowMap.enabled = true;
+            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         }
-    }
+    
+    }    
+    //#endregion
+    //#region Event Handlers
 
     private handleMultiSelectNode(clickedNode: Node): void {
-        const selectedNodes = this.engineeringManager.selectedNodes;
+        const selectedNodes = this.engineeringManager?.selectedNodes;
 
-        if (selectedNodes.length === 0 || selectedNodes.length === 1) {
-            clickedNode.select(this.transformControls, true);
+        if (selectedNodes?.length === 0 || selectedNodes?.length === 1) {
+            // clickedNode.select(this.transformControls, true);
             this.infoPanelText(selectedNodes.length === 0 ? "Select an end node (Ctrl-click)" : "Connection established");
-        } else if (selectedNodes.length === 2) {
+        } else if (selectedNodes?.length === 2) {
             this.unselectAllNodes();
-            clickedNode.select(this.transformControls, true);
-            this.infoPanelText("Select an end node (Ctrl-click)");
+            // clickedNode.select(this.transformControls, true);
+            this.infoPanelText('Select an end node (Ctrl-click)');
         } else {
             this.unselectAllNodes();
             this.infoPanelText("Please Ctrl-click to select exactly 2 nodes to connect.");
@@ -222,10 +176,10 @@ export class World extends EventEmitter {
     }
 
     private handleSingleSelectNode(clickedNode: Node): void {
-        this.unselectAllNodes();
-        clickedNode.select(this.transformControls, false);
+        // this.unselectAllNodes();
+        // clickedNode.select(this.transformControls, false);
 
-        if (this.engineeringManager.selectedNodes.length === 1) {
+        if (this.engineeringManager && this.engineeringManager.selectedNodes){
             this.infoPanelText("Selected node for movement");
             this.emit("nodeSelected", clickedNode);
         } else {
@@ -235,42 +189,42 @@ export class World extends EventEmitter {
     }
 
     private unselectAllNodes(): void {
-        this.engineeringManager.selectedNodes.forEach(node => node.select(this.transformControls, false));
+        // this.engineeringManager.selectedNodes.forEach(node => node.select(this.transformControls, false));
         this.infoPanelText("No object selected");
         this.emit("nodeSelected", null);
     }
 
-    public addNode(): void {
+    public addNode() {
         const randomPosition = new THREE.Vector3(
             (Math.random() - 0.5) * 0.8,
-            (Math.random() - 0.5) * 0.8,
-            (Math.random() - 0.5) * 0.8
+            (Math.random() - 0.5) * 0.8,(Math.random() - 0.5) * 0.8
         );
-        this.engineeringManager.createNode(randomPosition, this.scene);
+        if(this.engineeringManager && this.scene)
+            this.engineeringManager.createNode(randomPosition, this.scene);
     }
 
     public resetCameraView(): void {
-        this.camera.position.set(1.2, 1.2, 1.8);
-        this.camera.lookAt(0, 0, 0);
-        this.controls.target.set(0, 0, 0);
-        this.controls.update();
-    }
-
-    public deleteSelected(): void {
-        const selectedNode = this.engineeringManager.selectedNode(1);
-        if (selectedNode) {
-            this.engineeringManager.deleteNode(selectedNode, this.scene);
-            this.infoPanelText("No object selected");
-            this.emit("nodeSelected", null);
+        if (this.camera) {
+            this.camera.position.set(1.2, 1.2, 1.8);
+            this.camera.lookAt(0, 0, 0);
         }
     }
 
+    public deleteSelected(): void {
+        // const selectedNode = this.engineeringManager.selectedNode(1);
+        // if (selectedNode) {
+        //     this.engineeringManager.deleteNode(selectedNode, this.scene);
+        //     this.infoPanelText("No object selected");
+            this.emit("nodeSelected", null);
+    }
+
     public linkSelected(): void {
-        const selectedNodes = this.engineeringManager.selectedNodes;
-        if (selectedNodes.length === 2) {
+        const selectedNodes = this.engineeringManager?.selectedNodes;
+        if (selectedNodes?.length === 2) {
             const [node1, node2] = selectedNodes;
+            if(this.engineeringManager && this.scene){
             this.engineeringManager.createBeam(node1, node2, this.scene);
-            this.infoPanelText("Connected nodes");
+            }
         } else {
             this.infoPanelText("Please Ctrl-click to select exactly 2 nodes to connect.");
         }
@@ -289,14 +243,15 @@ export class World extends EventEmitter {
      * @param {number} deltaTime - The time elapsed since the last update.
      */
     public updateAll(deltaTime: number): void {
-        this.controls.update();
-        this.transformControls.update();
-        this.engineeringManager.updateAllNodes(deltaTime);
-        this.engineeringManager.updateAllBeams(deltaTime);
+        if (this.engineeringManager) {
+            this.engineeringManager.updateAllNodes(deltaTime);
+            this.engineeringManager.updateAllBeams(deltaTime);
+        }
     }
 
     public render(): void {
-        this.renderer.render(this.scene, this.camera);
+        if (this.renderer && this.scene && this.camera)
+            this.renderer.render(this.scene, this.camera);
     }
     //#endregion
 

@@ -1,5 +1,5 @@
 // src/components/Page.tsx
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Toolbar from '../UI/Toolbar';
 import InfoPanel from '../UI/InfoPanel';
 import { World } from '../world/World';
@@ -31,7 +31,9 @@ const Page: React.FC<PageProps> = ({ canvas }) => {
         world.render();
         requestAnimationFrame(animate);
       };
-      animate();
+      if (worldRef.current) {
+        animate();
+      }
     }
   }, [canvas]);
 

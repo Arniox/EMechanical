@@ -76,18 +76,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ world }) => {
     world.resetCameraView();
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
   useEffect(() => {
     const showGridCheckbox = showGridCheckboxRef.current;
     if (showGridCheckbox) {

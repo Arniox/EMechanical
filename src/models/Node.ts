@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { WorldElement } from './WorldElement';
 import Utilities from '../world/Utilities';
 
@@ -37,7 +38,7 @@ export class Node extends WorldElement {
         this.mesh.position.copy(this.position);
     }
 
-    public select(transformControls: THREE.TransformControls | null, toggle: boolean): void {
+    public select(transformControls: TransformControls | null, toggle: boolean): void {
         this.isSelected = toggle ? !this.isSelected : true;
         if (this.isSelected) {
             this.selectedIndex = Utilities.keyState.ControlLeft ? 2 : 1;
