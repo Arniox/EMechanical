@@ -20,7 +20,8 @@ export class World extends EventEmitter {
     public camera: THREE.PerspectiveCamera;
     public renderer: THREE.WebGLRenderer;
 
-    constructor() {\n        super();
+    constructor() {
+        super();
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x333333); // Dark Gray
@@ -52,7 +53,6 @@ export class World extends EventEmitter {
 
         // Event Listeners
         this.renderer.domElement.addEventListener("click", this.mouseClickEventHandler.bind(this));
-    }
 
     }
 

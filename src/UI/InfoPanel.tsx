@@ -1,4 +1,4 @@
-// src/UI/InfoPanel.tsx
+"use client";
 import React, { useState, useEffect } from 'react';
 import { World } from '../world/World'; // Assuming World is in a parent directory
 
