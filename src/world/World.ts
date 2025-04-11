@@ -245,20 +245,26 @@ export class World extends EventEmitter {
     //#endregion
     //#region Event Handlers
 
-    private handleMultiSelectNode(clickedNode: Node): void {
-        const selectedNodes = this.engineeringManager?.selectedNodes;
+   private handleMultiSelectNode(clickedNode: Node): void {
+        if (!this.engineeringManager || !this.scene) return;
 
-        if (selectedNodes?.length === 0 || selectedNodes?.length === 1) {
-            // clickedNode.select(this.transformControls, true);
-            this.infoPanelText(selectedNodes.length === 0 ? "Select an end node (Ctrl-click)" : "Connection established");
-        } else if (selectedNodes?.length === 2) {
-            this.unselectAllNodes();
-            // clickedNode.select(this.transformControls, true);
-            this.infoPanelText('Select an end node (Ctrl-click)');
-        } else {
-            this.unselectAllNodes();
-            this.infoPanelText("Please Ctrl-click to select exactly 2 nodes to connect.");
+        this.engineeringManager.selectNode(clickedNode);
+        const selectedNodes = this.engineeringManager.selectedNodes;
+
+        if (selectedNodes.length === 2) {
+            const [node1, node2] = selectedNodes;
+            this.engineeringManager.createBeam(node1, node2, this.scene);
+            this.infoPanelText("Connection established");
+        } else if (selectedNodes.length === 1) {
+            this.infoPanelText("Select an end node (Ctrl-click)");
+        } else if (selectedNodes.length > 2) {
+             this.unselectAllNodes();
+             this.infoPanelText("Please Ctrl-click to select exactly 2 nodes to connect.");
+        } else if (selectedNodes.length === 0){
+            this.engineeringManager.selectNode(clickedNode);
+            this.infoPanelText("Select an end node (Ctrl-click)");
         }
+
     }
 
     private handleSingleSelectNode(clickedNode: Node): void {
@@ -288,11 +294,16 @@ export class World extends EventEmitter {
     }
 
     public deleteSelected(): void {
-        // const selectedNode = this.engineeringManager.selectedNode(1);
-        // if (selectedNode) {
-        //     this.engineeringManager.deleteNode(selectedNode, this.scene);
-        //     this.infoPanelText("No object selected");
+        if (this.engineeringManager && this.scene) {
+            const selectedNodes = this.engineeringManager.selectedNodes;
+            for (const node of selectedNodes) {
+                this.engineeringManager.deleteNode(node, this.scene);
+            }
+            this.transformControls?.detach();
+            this.infoPanelText("No object selected");
             this.emit("nodeSelected", null);
+        }
+
     }
 
     public linkSelected(): void {
